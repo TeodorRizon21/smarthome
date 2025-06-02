@@ -1,0 +1,172 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  description       String
+  price             Float
+  oldPrice          Float?
+  images            String[]
+  sizes             String[]
+  collections       String[]
+  stock             Int
+  allowOutOfStock   Boolean
+  lowStockThreshold Int?
+  showStockLevel    Boolean
+  pdfUrl            String? // URL-ul către PDF-ul produsului
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  OrderItem         OrderItem[]
+  sizeVariants      SizeVariant[]
+  BundleItem        BundleItem[]
+}
+
+model Order {
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String? // Made optional
+  total         Float
+  paymentStatus String
+  orderStatus   String
+  paymentType   String
+  courier       String?
+  awb           String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  items         OrderItem[]
+  details       OrderDetails        @relation(fields: [detailsId], references: [id])
+  detailsId     String              @db.ObjectId
+  discountCodes OrderDiscountCode[]
+  orderType     String              @default("product")
+  BundleOrder   BundleOrder[]
+}
+
+model OrderItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String  @db.ObjectId
+  productId String  @db.ObjectId
+  quantity  Int
+  size      String
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model OrderDetails {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String? // Made optional
+  fullName         String
+  email            String
+  phoneNumber      String
+  street           String
+  city             String
+  county           String
+  postalCode       String
+  country          String
+  notes            String?
+  isCompany        Boolean  @default(false)
+  companyName      String?
+  companyCUI       String?
+  companyRegNumber String?
+  companyCounty    String?
+  companyCity      String?
+  companyAddress   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  Order            Order[]
+}
+
+model DiscountCode {
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  code           String              @unique
+  type           String
+  value          Float
+  usesLeft       Int?
+  totalUses      Int                 @default(0)
+  expirationDate DateTime?
+  canCumulate    Boolean
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  orders         OrderDiscountCode[]
+}
+
+model OrderDiscountCode {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  orderId        String       @db.ObjectId
+  discountCodeId String       @db.ObjectId
+  order          Order        @relation(fields: [orderId], references: [id])
+  discountCode   DiscountCode @relation(fields: [discountCodeId], references: [id])
+}
+
+model HeroSettings {
+  id       String @id @default("1") @map("_id")
+  slides   Json[]
+  interval Int    @default(5000)
+}
+
+model SizeVariant {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  productId         String  @db.ObjectId
+  size              String
+  price             Float
+  oldPrice          Float?
+  stock             Int
+  lowStockThreshold Int?
+  product           Product @relation(fields: [productId], references: [id])
+}
+
+model AdminNotificationEmail {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bundle {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  price           Float
+  oldPrice        Float?
+  images          String[]
+  stock           Int
+  discount        Float?        @default(0)
+  allowOutOfStock Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  items           BundleItem[]
+  BundleOrder     BundleOrder[]
+}
+
+model BundleItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  bundleId  String  @db.ObjectId
+  productId String  @db.ObjectId
+  quantity  Int     @default(1)
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model BundleOrder {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  orderId  String @db.ObjectId
+  bundleId String @db.ObjectId
+  quantity Int    @default(1)
+  price    Float
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bundle   Bundle @relation(fields: [bundleId], references: [id])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+}

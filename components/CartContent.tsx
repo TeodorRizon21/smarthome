@@ -1,0 +1,341 @@
+"use client";
+
+import { useCart } from "@/contexts/cart-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { useUser } from "@clerk/nextjs";
+import { useRouter, useSearchParams } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import Link from "next/link";
+import { ShoppingBag, Percent } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
+
+interface UserDiscount {
+  hasDiscounts: boolean;
+  discounts: Array<{
+    type: "percentage" | "free_shipping" | "fixed";
+    value?: number;
+    code: string;
+  }>;
+}
+
+interface DiscountItem {
+  code: string;
+  type: "percentage" | "fixed" | "free_shipping";
+  value: number;
+}
+
+export default function CartContent() {
+  const { state, dispatch } = useCart();
+  const { user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const detailsId = searchParams.get("detailsId");
+  const [userDiscounts, setUserDiscounts] = useState<UserDiscount | null>(null);
+
+  // Verificare discount automat pentru utilizator
+  useEffect(() => {
+    async function checkUserDiscount() {
+      if (!user) return;
+
+      try {
+        const response = await fetch("/api/get-user-discount");
+        const data = await response.json();
+
+        if (response.ok && data.hasDiscounts) {
+          setUserDiscounts(data);
+        }
+      } catch (error) {
+        console.error(
+          "Eroare la obținerea discount-urilor utilizatorului:",
+          error
+        );
+      }
+    }
+
+    checkUserDiscount();
+  }, [user]);
+
+  const updateQuantity = (
+    productId: string,
+    size: string,
+    quantity: number
+  ) => {
+    if (quantity < 1) return;
+
+    const item = state.items.find(
+      (i) => i.product.id === productId && i.selectedSize === size
+    );
+    if (!item) return;
+
+    const variant = item.product.sizeVariants.find((v) => v.size === size);
+    if (!variant) return;
+
+    const allowOutOfStock = item.product.allowOutOfStock;
+    const maxQuantity = allowOutOfStock ? Infinity : variant.stock;
+
+    if (quantity > maxQuantity) {
+      toast({
+        title: "Cannot update quantity",
+        description: `Maximum quantity available for this item has been reached`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    dispatch({
+      type: "UPDATE_QUANTITY",
+      payload: { productId, size, quantity },
+    });
+  };
+
+  const removeItem = (productId: string, size: string) => {
+    dispatch({
+      type: "REMOVE_FROM_CART",
+      payload: { productId, size },
+    });
+    toast({
+      title: "Item removed",
+      description: "The item has been removed from your cart.",
+    });
+  };
+
+  const handleProceedToOrderDetails = () => {
+    router.push("/order-details");
+  };
+
+  const handleCheckout = async () => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to checkout.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!detailsId) {
+      router.push("/order-details");
+      return;
+    }
+
+    try {
+      // Verificăm dacă există discounturi automate și le includem în request
+      let appliedDiscounts: DiscountItem[] = [];
+      if (userDiscounts && userDiscounts.hasDiscounts) {
+        appliedDiscounts = userDiscounts.discounts.map((discount) => ({
+          code: discount.code,
+          type: discount.type,
+          value:
+            discount.type === "percentage" || discount.type === "fixed"
+              ? discount.value || 0
+              : 0,
+        }));
+      }
+
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: state.items,
+          userId: user.id,
+          detailsId: detailsId,
+          appliedDiscounts: appliedDiscounts,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
+
+      const { sessionId } = await response.json();
+      const stripe = await stripePromise;
+
+      if (!stripe) {
+        throw new Error("Failed to load Stripe");
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Error in handleCheckout:", error);
+      toast({
+        title: "Checkout Error",
+        description:
+          error.message ||
+          "An error occurred during checkout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (state.items.length === 0) {
+    return (
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center space-y-6">
+          <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
+          <h1 className="text-3xl font-bold">Your cart is empty</h1>
+          <p className="text-gray-600">
+            Start adding items to your cart to make a purchase.
+          </p>
+          <Link href="/">
+            <Button size="lg" className="mt-6">
+              Start Shopping
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-6 py-12">
+      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+
+      {userDiscounts && userDiscounts.hasDiscounts && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
+          <div className="flex items-center">
+            <Percent className="h-5 w-5 text-green-600 mr-2" />
+            <div className="font-medium text-green-700">
+              {userDiscounts.discounts.length === 1 ? (
+                <span>
+                  Administratorul v-a aplicat un cod de reducere automat de:{" "}
+                  {userDiscounts.discounts[0].type === "percentage"
+                    ? `${userDiscounts.discounts[0].value}% la întreaga comandă`
+                    : userDiscounts.discounts[0].type === "fixed"
+                    ? `${userDiscounts.discounts[0].value} RON`
+                    : "transport gratuit"}
+                </span>
+              ) : (
+                <span>
+                  Administratorul v-a aplicat {userDiscounts.discounts.length}{" "}
+                  coduri de reducere automate
+                </span>
+              )}
+            </div>
+          </div>
+          {userDiscounts.discounts.length > 1 && (
+            <ul className="mt-2 ml-7 text-sm text-green-700">
+              {userDiscounts.discounts.map((discount, index) => (
+                <li key={discount.code}>
+                  {discount.type === "percentage"
+                    ? `${discount.value}% la întreaga comandă`
+                    : discount.type === "fixed"
+                    ? `${discount.value} RON reducere fixă`
+                    : "transport gratuit"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-8">
+        {state.items.map((item) => (
+          <div
+            key={`${item.product.id}-${item.selectedSize}`}
+            className="flex items-center justify-between border-b pb-4"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="relative w-24 h-24 flex-shrink-0">
+                <Image
+                  src={item.product.images[0] || "/placeholder.svg"}
+                  alt={item.product.name}
+                  fill
+                  className="object-cover rounded-md"
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold">{item.product.name}</h3>
+                <p className="text-sm text-gray-600">
+                  Size: {item.selectedSize}
+                </p>
+                <p className="text-sm font-medium">
+                  ${item.variant.price.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    updateQuantity(
+                      item.product.id,
+                      item.selectedSize,
+                      item.quantity - 1
+                    )
+                  }
+                >
+                  -
+                </Button>
+                <Input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) =>
+                    updateQuantity(
+                      item.product.id,
+                      item.selectedSize,
+                      parseInt(e.target.value)
+                    )
+                  }
+                  className="w-16 text-center"
+                  min="1"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    updateQuantity(
+                      item.product.id,
+                      item.selectedSize,
+                      item.quantity + 1
+                    )
+                  }
+                >
+                  +
+                </Button>
+              </div>
+
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => removeItem(item.product.id, item.selectedSize)}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+
+        <div className="pt-4">
+          <div className="flex justify-between items-center text-xl font-bold">
+            <span>Total:</span>
+            <span>${state.total.toFixed(2)}</span>
+          </div>
+          <Button
+            className="w-full mt-8"
+            onClick={detailsId ? handleCheckout : handleProceedToOrderDetails}
+          >
+            {detailsId ? "Proceed to Checkout" : "Continue to Order Details"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

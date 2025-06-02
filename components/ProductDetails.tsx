@@ -1,0 +1,248 @@
+"use client";
+
+import { useState } from "react";
+import { Product } from "@prisma/client";
+import { useCart } from "@/contexts/cart-context";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import Carousel from "@/components/Carousel";
+import { ProductWithVariants, SizeVariant } from "@/lib/types";
+import { ShoppingCart, Plus, Minus } from "lucide-react";
+
+interface ProductDetailsProps {
+  product: ProductWithVariants;
+  initialSize?: string;
+}
+
+export default function ProductDetails({
+  product,
+  initialSize,
+}: ProductDetailsProps) {
+  const [selectedSize, setSelectedSize] = useState<string>(
+    initialSize ||
+      (product.sizeVariants && product.sizeVariants.length > 0
+        ? product.sizeVariants[0].size
+        : "")
+  );
+  const [quantity, setQuantity] = useState(1);
+  const { dispatch } = useCart();
+
+  const handleAddToCart = () => {
+    const selectedVariant = product.sizeVariants.find(
+      (v) => v.size === selectedSize
+    );
+    if (!selectedVariant) return;
+
+    dispatch({
+      type: "ADD_TO_CART",
+      payload: {
+        product,
+        size: selectedSize,
+        variant: selectedVariant,
+        quantity,
+      },
+    });
+    toast({
+      title: "Produs adăugat în coș",
+      description: `${product.name} (${selectedSize}) x${quantity} a fost adăugat în coșul tău.`,
+    });
+  };
+
+  const incrementQuantity = () => {
+    setQuantity((prev) => Math.min(prev + 1, 10));
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prev) => Math.max(prev - 1, 1));
+  };
+
+  const images =
+    product.images && product.images.length > 0
+      ? product.images
+      : ["/placeholder.svg?height=500&width=500"];
+
+  const selectedVariant = product.sizeVariants.find(
+    (v) => v.size === selectedSize
+  );
+  const isOutOfStock = selectedVariant
+    ? selectedVariant.stock === 0 && !product.allowOutOfStock
+    : true;
+  const showLowStock =
+    product.showStockLevel &&
+    selectedVariant &&
+    selectedVariant.lowStockThreshold !== null &&
+    selectedVariant.stock > 0 &&
+    selectedVariant.stock <= selectedVariant.lowStockThreshold;
+
+  return (
+    <div className="container mx-auto px-6">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 bg-white rounded-3xl overflow-hidden shadow-lg">
+        {/* Secțiunea cu imaginea - fundal întunecat */}
+        <div className="w-full md:w-1/2 bg-[#1a1a1a] relative min-h-[200px] md:min-h-[600px] flex items-center justify-center">
+          <div className="w-[280px] h-[160px] md:w-full md:h-full relative">
+            <Carousel images={images} />
+          </div>
+        </div>
+
+        {/* Secțiunea cu detaliile produsului */}
+        <div className="w-full md:w-1/2 p-4 md:p-8 pt-6 md:pt-12 flex flex-col justify-center">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
+            {product.name}
+          </h1>
+          <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-8">
+            {product.description}
+          </p>
+
+          {product.pdfUrl && (
+            <div className="mb-4 md:mb-8">
+              <a
+                href={product.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Descarcă instrucțiuni PDF</span>
+              </a>
+            </div>
+          )}
+
+          {/* Mărimi disponibile */}
+          <div className="mb-4 md:mb-8">
+            <h3 className="text-xs md:text-sm font-medium mb-2 md:mb-3">
+              MĂRIME
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {product.sizeVariants.map((variant) => (
+                <button
+                  key={variant.size}
+                  onClick={() => setSelectedSize(variant.size)}
+                  className={`px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base rounded-lg border ${
+                    selectedSize === variant.size
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-black border-gray-200 hover:border-black"
+                  } ${
+                    variant.stock === 0 && !product.allowOutOfStock
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={variant.stock === 0 && !product.allowOutOfStock}
+                >
+                  {variant.size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Prețul și reducerea */}
+          <div className="mb-4 md:mb-8">
+            {selectedVariant && (
+              <>
+                {selectedVariant.oldPrice &&
+                selectedVariant.oldPrice > selectedVariant.price ? (
+                  <>
+                    <p className="text-2xl md:text-3xl font-bold text-red-600">
+                      {selectedVariant.price.toFixed(2)} lei
+                    </p>
+                    <p className="text-base md:text-lg text-gray-500 line-through">
+                      {selectedVariant.oldPrice.toFixed(2)} lei
+                    </p>
+                    <p className="text-base md:text-lg text-green-600">
+                      Economisești{" "}
+                      {(
+                        selectedVariant.oldPrice - selectedVariant.price
+                      ).toFixed(2)}{" "}
+                      lei (
+                      {Math.round(
+                        (1 - selectedVariant.price / selectedVariant.oldPrice) *
+                          100
+                      )}
+                      %)
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-2xl md:text-3xl font-bold">
+                    {selectedVariant.price.toFixed(2)} lei
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Mesaje stoc */}
+          {isOutOfStock && (
+            <p className="text-sm md:text-base text-red-600 font-semibold mb-2 md:mb-4">
+              Stoc epuizat
+            </p>
+          )}
+
+          {showLowStock && selectedVariant && (
+            <p className="text-sm md:text-base text-orange-600 font-semibold mb-2 md:mb-4">
+              Doar {selectedVariant.stock} produse rămase în stoc - comandă
+              acum!
+            </p>
+          )}
+
+          {/* Contor și buton adăugare în coș */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center bg-gray-100 rounded-2xl">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 hover:bg-gray-200 rounded-l-2xl"
+                onClick={decrementQuantity}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <div className="w-12 text-center font-medium">{quantity}</div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 hover:bg-gray-200 rounded-r-2xl"
+                onClick={incrementQuantity}
+                disabled={quantity >= 10}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={handleAddToCart}
+              className="flex-1 bg-[#FFD66C] hover:bg-[#ffc936] text-base md:text-lg py-4 md:py-6 text-black flex items-center justify-center gap-2"
+              disabled={isOutOfStock}
+            >
+              {isOutOfStock ? (
+                "Stoc epuizat"
+              ) : (
+                <>
+                  <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+                  <span>Cumpără</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
