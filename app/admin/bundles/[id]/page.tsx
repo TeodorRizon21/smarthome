@@ -12,10 +12,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface ViewBundlePageProps {
   params: {
     id: string;
+  };
+}
+
+interface BundleItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    images: string[];
   };
 }
 
@@ -48,7 +62,7 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
 
   // Calculăm totalul prețurilor produselor
   const totalProductsPrice = bundle.items.reduce(
-    (total, item) => total + item.product.price * item.quantity,
+    (total: number, item: BundleItem) => total + item.product.price * item.quantity,
     0
   );
 
@@ -92,7 +106,7 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {bundle.images.map((image, index) => (
+                {bundle.images.map((image: string, index: number) => (
                   <div
                     key={index}
                     className="aspect-square border rounded-md overflow-hidden"
@@ -130,7 +144,7 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
             </CardHeader>
             <CardContent>
               <div className="divide-y">
-                {bundle.items.map((item) => (
+                {bundle.items.map((item: BundleItem) => (
                   <div
                     key={item.id}
                     className="py-4 flex flex-col md:flex-row items-start md:items-center gap-4"
@@ -215,7 +229,9 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
                           <span className="text-gray-500 line-through">
                             ${bundle.oldPrice.toFixed(2)}
                           </span>
-                          <Badge className="bg-green-100 text-green-700">
+                          <Badge className={cn(
+                            "bg-green-100 text-green-700"
+                          )}>
                             {discountPercentage}% reducere
                           </Badge>
                         </div>
@@ -249,22 +265,25 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
                     <div className="mt-1">
                       {bundle.stock === 0 && !bundle.allowOutOfStock ? (
                         <Badge
-                          variant="destructive"
-                          className="bg-red-100 text-red-700"
+                          className={cn(
+                            "bg-red-100 text-red-700"
+                          )}
                         >
                           Stoc Epuizat
                         </Badge>
                       ) : bundle.stock <= 5 ? (
                         <Badge
-                          variant="secondary"
-                          className="bg-yellow-100 text-yellow-700"
+                          className={cn(
+                            "bg-yellow-100 text-yellow-700"
+                          )}
                         >
                           Stoc Limitat
                         </Badge>
                       ) : (
                         <Badge
-                          variant="default"
-                          className="bg-green-100 text-green-700"
+                          className={cn(
+                            "bg-green-100 text-green-700"
+                          )}
                         >
                           În Stoc
                         </Badge>
@@ -278,12 +297,11 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
                     Permite Vânzare Fără Stoc
                   </span>
                   <Badge
-                    variant={bundle.allowOutOfStock ? "default" : "secondary"}
-                    className={
+                    className={cn(
                       bundle.allowOutOfStock
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-700"
-                    }
+                    )}
                   >
                     {bundle.allowOutOfStock ? "Da" : "Nu"}
                   </Badge>
