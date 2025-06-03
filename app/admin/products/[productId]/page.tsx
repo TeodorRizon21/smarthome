@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit2 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
+import { SizeVariant } from "@/lib/types";
 
 export default async function ViewProductPage({
   params,
@@ -64,7 +65,7 @@ export default async function ViewProductPage({
 
             {product.images.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
-                {product.images.slice(1).map((image, index) => (
+                {product.images.slice(1).map((image: string, index: number) => (
                   <div
                     key={index}
                     className="aspect-square relative rounded-lg overflow-hidden"
@@ -103,7 +104,7 @@ export default async function ViewProductPage({
             <div>
               <h2 className="text-lg font-medium">Variante</h2>
               <div className="mt-2 space-y-2">
-                {product.sizeVariants.map((variant) => (
+                {product.sizeVariants.map((variant: SizeVariant) => (
                   <div
                     key={variant.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -128,7 +129,7 @@ export default async function ViewProductPage({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {product.collections.map((collection, index) => (
+              {product.collections.map((collection: string, index: number) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"

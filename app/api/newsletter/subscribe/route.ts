@@ -35,10 +35,15 @@ export async function POST(request: Request) {
 
     // Adăugăm contactul în Resend
     try {
+      const audienceId = process.env.RESEND_AUDIENCE_ID;
+      if (!audienceId) {
+        throw new Error('RESEND_AUDIENCE_ID is not configured');
+      }
+
       await resend.contacts.create({
         email,
         unsubscribed: false,
-        audienceId: process.env.RESEND_AUDIENCE_ID,
+        audienceId,
       });
     } catch (error) {
       console.error("Error adding contact to Resend:", error);

@@ -38,10 +38,15 @@ export async function POST(request: Request) {
 
     // Actualizează statusul în Resend
     try {
+      const audienceId = process.env.RESEND_AUDIENCE_ID;
+      if (!audienceId) {
+        throw new Error('RESEND_AUDIENCE_ID is not configured');
+      }
+
       const resendResponse = await resend.contacts.update({
-        email,
+        email: subscriber.email,
         unsubscribed: true,
-        audienceId: process.env.RESEND_AUDIENCE_ID,
+        audienceId,
       });
       
       console.log(`Răspuns de la Resend pentru dezabonare:`, resendResponse);

@@ -34,10 +34,15 @@ export async function POST(
 
     // Actualizează statusul în Resend
     try {
+      const audienceId = process.env.RESEND_AUDIENCE_ID;
+      if (!audienceId) {
+        throw new Error("RESEND_AUDIENCE_ID is not configured");
+      }
+
       await resend.contacts.update({
         email: subscriber.email,
         unsubscribed: true,
-        audienceId: process.env.RESEND_AUDIENCE_ID,
+        audienceId,
       });
     } catch (error) {
       console.error("Error updating contact in Resend:", error);

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+interface Product {
+  collections: string[];
+}
+
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
@@ -12,8 +16,8 @@ export async function GET() {
     const categories = new Set<string>();
     categories.add("all");
     
-    products.forEach(product => {
-      product.collections.forEach(category => {
+    products.forEach((product: Product) => {
+      product.collections.forEach((category: string) => {
         categories.add(category);
       });
     });

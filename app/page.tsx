@@ -4,7 +4,7 @@ import Newsletter from "@/components/Newsletter";
 import { prisma } from "@/lib/prisma";
 import BundleShowcase from "@/components/BundleShowcase";
 import InstallationShowcase from "@/components/InstallationShowcase";
-import type { ProductWithVariants } from "@/lib/types";
+import type { ProductWithVariants, Product, SizeVariant } from "@/lib/types";
 
 async function getProducts(): Promise<ProductWithVariants[]> {
   try {
@@ -18,19 +18,55 @@ async function getProducts(): Promise<ProductWithVariants[]> {
       }
     });
 
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      images: product.images,
-      collections: product.collections,
-      allowOutOfStock: product.allowOutOfStock,
-      showStockLevel: product.showStockLevel,
-      pdfUrl: product.pdfUrl,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-      sizeVariants: product.sizeVariants,
-    }));
+    return products.map((product: { 
+      id: string;
+      name: string;
+      description: string;
+      images: string[];
+      collections: string[];
+      allowOutOfStock: boolean;
+      showStockLevel: boolean;
+      pdfUrl: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      sizeVariants: SizeVariant[];
+    }) => {
+      // Calculate aggregate values from sizeVariants
+      const minVariant = product.sizeVariants.reduce((min: SizeVariant | null, variant: SizeVariant) => 
+        (!min || variant.price < min.price) ? variant : min
+      , product.sizeVariants[0]);
+
+      const totalStock = product.sizeVariants.reduce((sum: number, variant: SizeVariant) => 
+        sum + variant.stock
+      , 0);
+
+      const minLowStockThreshold = product.sizeVariants.reduce((min: number | null, variant: SizeVariant) => {
+        const threshold = variant.lowStockThreshold ?? null;
+        if (threshold === null) return min;
+        if (min === null) return threshold;
+        return threshold < min ? threshold : min;
+      }, null);
+
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        images: product.images,
+        collections: product.collections,
+        price: minVariant?.price ?? 0,
+        oldPrice: minVariant?.oldPrice ?? null,
+        sizes: product.sizeVariants.map((v: SizeVariant) => v.size),
+        stock: totalStock,
+        lowStockThreshold: minLowStockThreshold,
+        allowOutOfStock: product.allowOutOfStock,
+        showStockLevel: product.showStockLevel,
+        pdfUrl: product.pdfUrl,
+        tags: [],
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        sizeVariants: product.sizeVariants,
+      };
+    });
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return [];

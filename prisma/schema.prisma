@@ -21,6 +21,7 @@ model Product {
   lowStockThreshold Int?
   showStockLevel    Boolean
   pdfUrl            String? // URL-ul către PDF-ul produsului
+  tags              String[]     @default([])
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   OrderItem         OrderItem[]

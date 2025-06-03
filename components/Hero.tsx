@@ -74,7 +74,7 @@ const hotpoints = [
     label: "Produse",
     desc: "Comandă-ți casa folosind doar vocea",
     polyline: "600,232 525,232,448,185",
-    link: "/produse",
+    link: "/products"
   },
   {
     // Stânga mijloc

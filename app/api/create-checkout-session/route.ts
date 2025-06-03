@@ -2,12 +2,46 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 
+interface Product {
+  id: string;
+  name: string;
+}
+
+interface Bundle {
+  id: string;
+  name: string;
+}
+
+interface Variant {
+  price: number;
+}
+
+interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedSize: string;
+  variant: Variant;
+}
+
+interface Discount {
+  type: 'percentage' | 'fixed' | 'free_shipping';
+  value: number;
+}
+
+interface CheckoutRequestBody {
+  items: CartItem[];
+  userId: string | null;
+  detailsId: string;
+  paymentType: string;
+  appliedDiscounts?: Discount[];
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { items, userId, detailsId, paymentType, appliedDiscounts } = body;
+    const body = await req.json() as CheckoutRequestBody;
+    const { items, userId, detailsId, paymentType, appliedDiscounts = [] } = body;
 
-    if (!items || items.length === 0) {
+    if (!items?.length) {
       return NextResponse.json({ error: 'Nu există produse în coș' }, { status: 400 });
     }
 
@@ -17,7 +51,11 @@ export async function POST(req: Request) {
 
     // Verifică dacă detaliile comenzii există și dacă email-ul este valid
     const orderDetails = await prisma.orderDetails.findUnique({
-      where: { id: detailsId }
+      where: { id: detailsId },
+      select: {
+        email: true,
+        id: true
+      }
     });
 
     if (!orderDetails) {
@@ -31,64 +69,57 @@ export async function POST(req: Request) {
     }
 
     // Calculate total with discounts
-    const subtotal = items.reduce((acc: number, item: any) => 
+    const subtotal = items.reduce((acc, item) => 
       acc + (item.variant.price * item.quantity), 0
     );
     const shipping = 15; // Fixed shipping cost
-    const discountAmount = (appliedDiscounts || []).reduce((acc: number, discount: any) => {
-      if (discount.type === 'percentage') {
-        return acc + (subtotal * discount.value / 100);
-      } else if (discount.type === 'fixed') {
-        return acc + discount.value;
-      } else if (discount.type === 'free_shipping') {
-        return acc + shipping;
+    const discountAmount = appliedDiscounts.reduce((acc, discount) => {
+      switch (discount.type) {
+        case 'percentage':
+          return acc + (subtotal * discount.value / 100);
+        case 'fixed':
+          return acc + discount.value;
+        case 'free_shipping':
+          return acc + shipping;
+        default:
+          return acc;
       }
-      return acc;
     }, 0);
 
     const total = Math.max(0, subtotal + shipping - discountAmount);
     const totalInCents = Math.round(total * 100);
 
     // Separate regular products and bundles
-    const regularItems = [];
-    const bundleItems = [];
-
-    for (const item of items) {
-      const isBundle = item.product?.id?.toString().startsWith('bundle-');
-      
-      if (isBundle) {
-        bundleItems.push(item);
-      } else {
-        regularItems.push(item);
-      }
-    }
-
-    console.log("Regular items:", regularItems.map(item => ({ id: item.product.id, name: item.product.name })));
-    console.log("Bundle items:", bundleItems.map(item => ({ id: item.product.id, bundleId: item.product.id.replace('bundle-', ''), name: item.product.name })));
+    const { regularItems, bundleItems } = items.reduce<{
+      regularItems: CartItem[];
+      bundleItems: CartItem[];
+    }>(
+      (acc, item) => {
+        const isBundle = item.product.id.startsWith('bundle-');
+        if (isBundle) {
+          acc.bundleItems.push(item);
+        } else {
+          acc.regularItems.push(item);
+        }
+        return acc;
+      },
+      { regularItems: [], bundleItems: [] }
+    );
 
     // Verifică dacă toate produsele normale există în baza de date
     if (regularItems.length > 0) {
       const productIds = regularItems.map(item => item.product.id);
-      console.log("Produse de verificat:", productIds);
       
       const existingProducts = await prisma.product.findMany({
         where: {
-          id: {
-            in: productIds
-          }
+          id: { in: productIds }
         },
-        select: {
-          id: true
-        }
+        select: { id: true }
       });
-      
-      console.log("Produse găsite în baza de date:", existingProducts.map(p => p.id));
 
-      // Verifică dacă avem același număr de produse găsite ca și în comanda
       if (existingProducts.length !== productIds.length) {
-        const foundIds = existingProducts.map(p => p.id);
-        const missingIds = productIds.filter(id => !foundIds.includes(id));
-        console.log("Produse lipsă:", missingIds);
+        const foundIds = new Set(existingProducts.map((p: { id: string }) => p.id));
+        const missingIds = productIds.filter(id => !foundIds.has(id));
         return NextResponse.json({ 
           error: `Unul sau mai multe produse nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 });
@@ -97,48 +128,18 @@ export async function POST(req: Request) {
 
     // Verifică dacă toate pachetele există în baza de date
     if (bundleItems.length > 0) {
-      // Corectează extragerea ID-urilor de bundle
-      const bundleIds = bundleItems.map(item => {
-        const fullId = item.product.id;
-        if (fullId.startsWith('bundle-')) {
-          return fullId.substring(7); // Scoate 'bundle-' din față
-        }
-        return fullId; // În caz că nu are prefix, folosește id-ul așa cum este
-      });
-      
-      console.log("Bundle-uri de verificat (corectate):", bundleIds);
-      
-      // Încearcă să găsești fiecare pachet individual pentru debugging
-      for (const bundleId of bundleIds) {
-        try {
-          const bundle = await prisma.bundle.findUnique({
-            where: { id: bundleId },
-            select: { id: true }
-          });
-          console.log(`Verificare bundle ${bundleId}: ${bundle ? 'găsit' : 'negăsit'}`);
-        } catch (err) {
-          console.error(`Eroare la verificarea bundle-ului ${bundleId}:`, err);
-        }
-      }
+      const bundleIds = bundleItems.map(item => item.product.id.replace('bundle-', ''));
       
       const existingBundles = await prisma.bundle.findMany({
         where: {
-          id: {
-            in: bundleIds
-          }
+          id: { in: bundleIds }
         },
-        select: {
-          id: true
-        }
+        select: { id: true }
       });
-      
-      console.log("Bundle-uri găsite în baza de date:", existingBundles.map(b => b.id));
 
-      // Verifică dacă avem același număr de pachete găsite ca și în comanda
       if (existingBundles.length !== bundleIds.length) {
-        const foundIds = existingBundles.map(b => b.id);
-        const missingIds = bundleIds.filter(id => !foundIds.includes(id));
-        console.log("Bundle-uri lipsă:", missingIds);
+        const foundIds = new Set(existingBundles.map((b: { id: string }) => b.id));
+        const missingIds = bundleIds.filter(id => !foundIds.has(id));
         return NextResponse.json({ 
           error: `Unul sau mai multe pachete nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 });
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
             currency: 'ron',
             product_data: {
               name: 'Order Total',
-              description: `${items.length} item${items.length > 1 ? 's' : ''} with shipping${appliedDiscounts?.length > 0 ? ' and discounts' : ''}`,
+              description: `${items.length} item${items.length > 1 ? 's' : ''} with shipping${appliedDiscounts.length > 0 ? ' and discounts' : ''}`,
             },
             unit_amount: totalInCents,
           },
@@ -175,34 +176,12 @@ export async function POST(req: Request) {
           size: item.selectedSize,
           price: item.variant.price
         }))),
-        bundleItems: JSON.stringify(bundleItems.map(item => {
-          const fullId = item.product.id;
-          const bundleId = fullId.startsWith('bundle-') ? fullId.substring(7) : fullId;
-          console.log(`Adaugă în sesiunea Stripe: Bundle ${bundleId} din ${fullId}`);
-          return {
-            bundleId: bundleId,
-            quantity: item.quantity,
-            price: item.variant.price
-          };
-        })),
-        appliedDiscounts: JSON.stringify(appliedDiscounts || []),
-        items: JSON.stringify([
-          ...regularItems.map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            size: item.selectedSize,
-            price: item.variant.price
-          })),
-          ...bundleItems.map(item => {
-            const fullId = item.product.id;
-            const bundleId = fullId.startsWith('bundle-') ? fullId.substring(7) : fullId;
-            return {
-              bundleId: bundleId,
-              quantity: item.quantity,
-              price: item.variant.price
-            };
-          })
-        ]),
+        bundleItems: JSON.stringify(bundleItems.map(item => ({
+          bundleId: item.product.id.replace('bundle-', ''),
+          quantity: item.quantity,
+          price: item.variant.price
+        }))),
+        appliedDiscounts: JSON.stringify(appliedDiscounts),
         email: orderDetails.email,
       },
     });

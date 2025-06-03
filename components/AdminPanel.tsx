@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from '@/hooks/use-toast'
 import ImageUpload from "@/components/ImageUpload"
-import { Product } from '@prisma/client'
+import type { Product } from '@/lib/types'
 import { COLLECTIONS } from '@/lib/collections'
 import { Trash2 } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
@@ -46,7 +46,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   const [allowOutOfStock, setAllowOutOfStock] = useState(product?.allowOutOfStock || false)
   const [showStockLevel, setShowStockLevel] = useState(product?.showStockLevel || false)
   const [sizeVariants, setSizeVariants] = useState<SizeVariant[]>(
-    product?.sizeVariants.map(variant => ({
+    product?.sizeVariants.map((variant: { id: string; size: string; price: number; oldPrice: number | null; stock: number; lowStockThreshold: number | null }) => ({
       id: variant.id,
       size: variant.size,
       price: variant.price.toString(),

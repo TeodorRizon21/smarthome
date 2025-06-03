@@ -66,13 +66,13 @@ export default function BundlesPage() {
 
     // Create a dummy size variant for the bundle
     const bundleVariant: SizeVariant = {
-      id: bundle.id,
-      productId: `bundle-${bundle.id}`,
+      id: `bundle-${bundle.id}-standard`,
       size: "standard",
       price: bundle.price,
       oldPrice: bundle.oldPrice,
       stock: bundle.stock,
       lowStockThreshold: 5,
+      productId: `bundle-${bundle.id}`
     };
 
     // Add to cart using dispatch
@@ -84,11 +84,17 @@ export default function BundlesPage() {
           name: bundle.name,
           description: bundle.description,
           images: bundle.images,
-          sizeVariants: [bundleVariant],
+          collections: [],
+          price: bundle.price,
+          oldPrice: bundle.oldPrice,
+          sizes: ["standard"],
+          stock: bundle.stock,
+          lowStockThreshold: 5,
           allowOutOfStock: bundle.allowOutOfStock,
           showStockLevel: false,
           createdAt: new Date(),
           updatedAt: new Date(),
+          sizeVariants: [bundleVariant]
         },
         size: "standard",
         variant: bundleVariant,

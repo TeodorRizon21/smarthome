@@ -2,11 +2,16 @@ import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 import { generateInvoicePDF } from '@/lib/pdf';
 
+interface AdminEmail {
+  id: string;
+  email: string;
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = {
-  email: process.env.RESEND_FROM_EMAIL || 'noreply@smarthomemall.ro',
-  name: 'SmartHomeMall'
+  name: 'Smart Homes',
+  email: 'no-reply@smarthomes.ro'
 };
 
 export async function sendEmail(to: string, subject: string, html: string, attachments?: any[]) {
@@ -109,7 +114,7 @@ export async function sendAdminNotification(order: any) {
 
     console.log('Sending emails to admins...');
     const results = await Promise.allSettled(
-      adminEmails.map(admin => 
+      adminEmails.map((admin: AdminEmail) => 
         sendEmail(
           admin.email,
           'New Order Notification',

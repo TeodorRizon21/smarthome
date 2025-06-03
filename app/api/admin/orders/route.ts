@@ -1,10 +1,170 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Product } from '@prisma/client';
+
+interface OrderDetails {
+  id: string;
+  userId?: string | null;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  county: string;
+  postalCode: string;
+  country: string;
+  notes?: string;
+  isCompany: boolean;
+  companyName?: string;
+  companyCUI?: string;
+  companyRegNumber?: string;
+  companyCounty?: string;
+  companyCity?: string;
+  companyAddress?: string;
+}
+
+interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  size: string;
+  price: number;
+  product?: {
+    id: string;
+    name: string;
+    images: string[];
+  };
+}
+
+interface BundleOrder {
+  id: string;
+  orderId: string;
+  bundleId: string;
+  quantity: number;
+  price: number;
+  bundle: {
+    id: string;
+    name: string;
+    images: string[];
+  };
+}
+
+interface OrderDiscountCode {
+  id: string;
+  orderId: string;
+  discountCodeId: string;
+  discountCode: {
+    code: string;
+    type: string;
+    value: number;
+  };
+}
+
+interface Order {
+  id: string;
+  userId: string | null;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentType: string;
+  courier?: string | null;
+  awb?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  items: OrderItem[];
+  BundleOrder: BundleOrder[];
+  discountCodes: OrderDiscountCode[];
+  orderType: string;
+  details: OrderDetails;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
 
 interface ProductMap {
   [id: string]: Product;
 }
+
+// Type that matches Prisma's return structure
+type PrismaOrder = {
+  id: string;
+  userId: string | null;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentType: string;
+  courier: string | null;
+  awb: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  orderType: string;
+  items: Array<{
+    id: string;
+    orderId: string;
+    productId: string;
+    quantity: number;
+    size: string;
+    price: number;
+    product: {
+      id: string;
+      name: string;
+      images: string[];
+    } | null;
+  }>;
+  BundleOrder: Array<{
+    id: string;
+    orderId: string;
+    bundleId: string;
+    quantity: number;
+    price: number;
+    bundle: {
+      name: string;
+      id: string;
+      description: string;
+      price: number;
+      oldPrice: number | null;
+      images: string[];
+      stock: number;
+      allowOutOfStock: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+      discount: number | null;
+    };
+  }>;
+  details: {
+    id: string;
+    userId: string | null;
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    street: string;
+    city: string;
+    county: string;
+    postalCode: string;
+    country: string;
+    notes: string | null;
+    isCompany: boolean;
+    companyName: string | null;
+    companyCUI: string | null;
+    companyRegNumber: string | null;
+    companyCounty: string | null;
+    companyCity: string | null;
+    companyAddress: string | null;
+  };
+  discountCodes: Array<{
+    id: string;
+    orderId: string;
+    discountCodeId: string;
+    discountCode: {
+      code: string;
+      type: string;
+      value: number;
+    };
+  }>;
+};
 
 export async function GET(request: Request) {
   try {
@@ -13,10 +173,19 @@ export async function GET(request: Request) {
 
     console.log("Fetching orders with type:", requestedOrderType || "all");
 
-    // Aducem toate comenzile și le filtrăm ulterior
     const orders = await prisma.order.findMany({
       include: {
-        items: true, // Nu mai facem include direct la produs
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: true
+              }
+            }
+          }
+        },
         details: true,
         discountCodes: {
           include: {
@@ -25,22 +194,18 @@ export async function GET(request: Request) {
         },
         BundleOrder: {
           include: {
-            bundle: true // Nu mai includăm items pentru bundle aici
+            bundle: true
           }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    // Filtrăm manual pe orderType 
     const filteredOrders = requestedOrderType 
-      ? orders.filter(order => {
+      ? (orders as PrismaOrder[]).filter(order => {
           console.log(`Order ${order.id} has type '${order.orderType}', comparing with '${requestedOrderType}'`);
           
           if (requestedOrderType === 'product') {
-            // Pentru produse, verificăm explicit că orderType este 'product' sau nedefinit/null 
-            // și că nu există bundle-uri sau că lista de bundle-uri este goală
-            // Excludem explicit și comenzile de tip 'kit'
             const isProductOrder = 
               (order.orderType === 'product' || !order.orderType) && 
               order.orderType !== 'kit' &&
@@ -50,8 +215,6 @@ export async function GET(request: Request) {
             return isProductOrder;
           } 
           else if (requestedOrderType === 'bundle') {
-            // Pentru bundle-uri, verificăm explicit că orderType este 'bundle' 
-            // și că există cel puțin un bundle în BundleOrder
             const isBundleOrder = order.orderType === 'bundle' && 
               order.BundleOrder && order.BundleOrder.length > 0;
             
@@ -59,7 +222,6 @@ export async function GET(request: Request) {
             return isBundleOrder;
           }
           
-          // Fallback la verificarea normală
           return order.orderType === requestedOrderType;
         })
       : orders;
@@ -68,7 +230,7 @@ export async function GET(request: Request) {
 
     // Preluăm toate ID-urile de produse pentru a le verifica separat
     const productIds = new Set<string>();
-    filteredOrders.forEach(order => {
+    filteredOrders.forEach((order: PrismaOrder) => {
       order.items.forEach(item => {
         productIds.add(item.productId);
       });
@@ -87,14 +249,14 @@ export async function GET(request: Request) {
     
     // Creăm un map pentru accesare rapidă
     const productsMap: ProductMap = {};
-    products.forEach(product => {
+    products.forEach((product: Product) => {
       productsMap[product.id] = product;
     });
 
     console.log(`Found ${products.length} products for filtered orders`);
 
     // Formăm răspunsul cu produsele disponibile
-    const formattedOrders = filteredOrders.map(order => ({
+    const formattedOrders = filteredOrders.map((order: PrismaOrder) => ({
       id: order.id,
       createdAt: order.createdAt.toISOString(),
       total: order.total,
@@ -124,7 +286,7 @@ export async function GET(request: Request) {
           ? {
               name: bundleOrder.bundle.name,
               images: bundleOrder.bundle.images || [],
-              items: [] // Nu expunem aceste date în acest endpoint
+              items: []
             }
           : {
               name: 'Pachet indisponibil',
@@ -158,7 +320,7 @@ export async function GET(request: Request) {
       paymentType: order.paymentType,
       courier: order.courier,
       awb: order.awb,
-      discountCodes: order.discountCodes.map(dc => ({
+      discountCodes: order.discountCodes.map((dc: OrderDiscountCode) => ({
         code: dc.discountCode?.code || 'unknown',
         type: dc.discountCode?.type || 'unknown',
         value: dc.discountCode?.value || 0

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isSortOption, SORT_OPTIONS } from "@/lib/collections"
 
-export async function GET(request: Request) {
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: Request, { params, searchParams }: { params: {}; searchParams: { [key: string]: string | string[] | undefined } }) {
   try {
-    const { searchParams } = new URL(request.url)
-    const collection = searchParams.get("collection")
-    const sort = searchParams.get("sort") || SORT_OPTIONS.DEFAULT
+    const collection = searchParams.collection?.toString()
+    const sort = searchParams.sort?.toString() || SORT_OPTIONS.DEFAULT
 
     if (!collection) {
       return NextResponse.json({ error: "Collection is required" }, { status: 400 })

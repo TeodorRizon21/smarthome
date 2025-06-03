@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "@prisma/client";
+import { Product } from "@/lib/types";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,8 +77,8 @@ export default function ProductDetails({
   const showLowStock =
     product.showStockLevel &&
     selectedVariant &&
-    selectedVariant.lowStockThreshold !== null &&
     selectedVariant.stock > 0 &&
+    typeof selectedVariant.lowStockThreshold === 'number' &&
     selectedVariant.stock <= selectedVariant.lowStockThreshold;
 
   return (

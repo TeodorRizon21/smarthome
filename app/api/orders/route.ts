@@ -1,6 +1,85 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface OrderDetails {
+  id: string;
+  userId?: string | null;
+  email: string;
+  fullName: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  county: string;
+  postalCode: string;
+  country: string;
+  notes: string | null;
+  isCompany: boolean;
+  companyName: string | null;
+  companyCUI: string | null;
+  companyRegNumber: string | null;
+  companyCounty: string | null;
+  companyCity: string | null;
+  companyAddress: string | null;
+}
+
+interface OrderItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  size: string;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    images: string[];
+  };
+}
+
+interface BundleOrder {
+  id: string;
+  bundleId: string;
+  quantity: number;
+  price: number;
+  bundle: {
+    name: string;
+    images: string[];
+  };
+}
+
+interface DiscountCodeDetails {
+  id: string;
+  code: string;
+  type: string;
+  value: number;
+  usesLeft: number | null;
+  totalUses: number;
+  expirationDate: Date | null;
+  canCumulate: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface OrderDiscountCode {
+  discountCode: DiscountCodeDetails;
+}
+
+interface Order {
+  id: string;
+  userId: string | null;
+  createdAt: Date;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  orderType: string;
+  paymentType: string;
+  courier?: string | null;
+  awb?: string | null;
+  items: OrderItem[];
+  BundleOrder: BundleOrder[];
+  discountCodes: OrderDiscountCode[];
+  details: OrderDetails;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
@@ -33,14 +112,14 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' }
     })
 
-    const formattedOrders = orders.map(order => ({
+    const formattedOrders = orders.map((order: Order) => ({
       id: order.id,
       createdAt: order.createdAt.toISOString(),
       total: order.total,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
       orderType: order.orderType,
-      items: order.items.map(item => ({
+      items: order.items.map((item: OrderItem) => ({
         id: item.id,
         productId: item.product.id,
         productName: item.product.name,
@@ -49,7 +128,7 @@ export async function GET(request: Request) {
         price: item.price,
         image: item.product.images[0] || '/placeholder.svg'
       })),
-      bundleOrders: order.BundleOrder.map(bundleOrder => ({
+      bundleOrders: order.BundleOrder.map((bundleOrder: BundleOrder) => ({
         id: bundleOrder.id,
         bundleId: bundleOrder.bundleId,
         quantity: bundleOrder.quantity,
@@ -85,7 +164,7 @@ export async function GET(request: Request) {
       paymentType: order.paymentType,
       courier: order.courier,
       awb: order.awb,
-      discountCodes: order.discountCodes.map(dc => ({
+      discountCodes: order.discountCodes.map((dc: OrderDiscountCode) => ({
         code: dc.discountCode.code,
         type: dc.discountCode.type,
         value: dc.discountCode.value

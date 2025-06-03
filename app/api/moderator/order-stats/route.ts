@@ -1,6 +1,34 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+interface OrderItem {
+  quantity: number;
+}
+
+interface BundleOrder {
+  bundleId: string;
+  quantity: number;
+}
+
+interface BundleItem {
+  quantity: number;
+  bundleId: string;
+}
+
+interface Order {
+  id: string;
+  userId: string | null;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentType: string;
+  courier?: string | null;
+  awb?: string | null;
+  createdAt: Date;
+  items: OrderItem[];
+  BundleOrder: BundleOrder[];
+}
+
 // Funcție pentru a calcula numărul de zile în urmă
 function getDaysAgo(days: number): Date {
   const date = new Date();
@@ -28,6 +56,8 @@ function getYearAgo(): Date {
   date.setFullYear(date.getFullYear() - 1);
   return date;
 }
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
@@ -92,7 +122,7 @@ export async function GET(request: Request) {
     });
     
     // Calculăm numărul total de produse individuale
-    const totalIndividualProducts = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalIndividualProducts = orderItems.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0);
 
     // 3. Obținem toate bundle-urile comandate care se potrivesc criteriilor
     const bundleOrders = await prisma.bundleOrder.findMany({
@@ -108,7 +138,7 @@ export async function GET(request: Request) {
     });
 
     // Obținem toate ID-urile bundle-urilor pentru a putea calcula numărul total de produse
-    const bundleIds = bundleOrders.map(order => order.bundleId);
+    const bundleIds = bundleOrders.map((order: BundleOrder) => order.bundleId);
 
     let totalBundleProducts = 0;
     
@@ -129,13 +159,13 @@ export async function GET(request: Request) {
       // Creăm un map pentru a ține evidența numărului de produse din fiecare bundle
       const bundleProductsMap = new Map<string, number>();
 
-      bundleItems.forEach(item => {
+      bundleItems.forEach((item: BundleItem) => {
         const currentTotal = bundleProductsMap.get(item.bundleId) || 0;
         bundleProductsMap.set(item.bundleId, currentTotal + item.quantity);
       });
 
       // Calculăm numărul total de produse din bundle-uri, luând în considerare cantitatea bundle-urilor comandate
-      bundleOrders.forEach(order => {
+      bundleOrders.forEach((order: BundleOrder) => {
         const productsInBundle = bundleProductsMap.get(order.bundleId) || 0;
         totalBundleProducts += productsInBundle * order.quantity;
       });
@@ -153,7 +183,7 @@ export async function GET(request: Request) {
     });
     
     // Calculăm suma totală
-    const totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalAmount = orders.reduce((sum: number, order: { total: number }) => sum + order.total, 0);
 
     return NextResponse.json({
       orderCount,

@@ -3,7 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/auth";
 import { clerkClient } from "@clerk/nextjs/server";
 
-export async function GET(request: Request) {
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: Request, { params, searchParams }: { params: {}; searchParams: { [key: string]: string | string[] | undefined } }) {
   try {
     console.log("Starting user fetch...");
     
@@ -20,9 +22,8 @@ export async function GET(request: Request) {
     //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     // }
 
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = parseInt(searchParams.page?.toString() || "1");
+    const limit = parseInt(searchParams.limit?.toString() || "10");
     const offset = (page - 1) * limit;
 
     // Log all environment variables (except secret keys)

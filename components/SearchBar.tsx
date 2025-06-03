@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@prisma/client";
+import type { Product } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
 

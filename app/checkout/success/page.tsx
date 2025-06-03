@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import SuccessContent from "@/components/SuccessContent";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { sendAdminNotification, sendOrderConfirmation } from "@/lib/email";
+import { PrismaClient } from "@prisma/client";
+import { SizeVariant } from "@/lib/types";
+import { Prisma } from "@prisma/client";
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -105,10 +108,10 @@ export default async function CheckoutSuccessPage({
 
         // Use a transaction to create order and update stock
         try {
-          order = await prisma.$transaction(async (prisma) => {
+          order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             console.log("Creating order...");
             // Create the order first
-            const newOrder = await prisma.order.create({
+            const newOrder = await tx.order.create({
               data: {
                 userId,
                 total: session.amount_total! / 100,
@@ -166,7 +169,7 @@ export default async function CheckoutSuccessPage({
               console.log("Updating regular products stock...");
               for (const item of parsedRegularItems) {
                 try {
-                  const product = await prisma.product.findUnique({
+                  const product = await tx.product.findUnique({
                     where: { id: item.productId },
                     include: {
                       sizeVariants: true,
@@ -177,12 +180,12 @@ export default async function CheckoutSuccessPage({
                     console.log(`Updating stock for product: ${product.id}`);
                     // Find the size variant
                     const sizeVariant = product.sizeVariants.find(
-                      (v) => v.size === item.size
+                      (v: SizeVariant) => v.size === item.size
                     );
 
                     if (sizeVariant) {
                       // Update the stock for the size variant
-                      await prisma.sizeVariant.updateMany({
+                      await tx.sizeVariant.updateMany({
                         where: {
                           productId: item.productId,
                           size: item.size,
@@ -217,7 +220,7 @@ export default async function CheckoutSuccessPage({
               for (const bundleItem of parsedBundleItems) {
                 try {
                   // Get the bundle with its items
-                  const bundle = await prisma.bundle.findUnique({
+                  const bundle = await tx.bundle.findUnique({
                     where: { id: bundleItem.bundleId },
                     include: {
                       items: {
@@ -236,7 +239,7 @@ export default async function CheckoutSuccessPage({
                     console.log(`Processing bundle: ${bundle.id}`);
 
                     // Update bundle stock
-                    await prisma.bundle.update({
+                    await tx.bundle.update({
                       where: { id: bundle.id },
                       data: {
                         stock: {
@@ -309,12 +312,12 @@ export default async function CheckoutSuccessPage({
           console.log("Order already processed, skipping stock updates");
           order = existingOrder;
         } else {
-          order = await prisma.$transaction(async (prisma) => {
+          order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             console.log("Updating stock...");
             for (const item of existingOrder.items) {
               try {
                 // Verifică dacă este un produs normal, nu un pachet
-                const product = await prisma.product.findUnique({
+                const product = await tx.product.findUnique({
                   where: { id: item.productId },
                   include: {
                     sizeVariants: true,
@@ -325,12 +328,12 @@ export default async function CheckoutSuccessPage({
                   console.log(`Updating stock for product: ${product.id}`);
                   // Verifică dacă există varianta de mărime
                   const sizeVariant = product.sizeVariants.find(
-                    (v) => v.size === item.size
+                    (v: SizeVariant) => v.size === item.size
                   );
 
                   if (sizeVariant) {
                     // Actualizează stocul doar pentru produse normale
-                    await prisma.sizeVariant.updateMany({
+                    await tx.sizeVariant.updateMany({
                       where: {
                         productId: item.productId,
                         size: item.size,

@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendAdminNotification, sendOrderConfirmation } from '@/lib/email'
 
+interface Product {
+  id: string;
+}
+
+interface Bundle {
+  id: string;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -78,11 +86,11 @@ export async function POST(req: Request) {
         }
       })
       
-      console.log("Produse găsite în baza de date:", existingProducts.map(p => p.id));
+      console.log("Produse găsite în baza de date:", existingProducts.map((p: Product) => p.id));
 
       // Verifică dacă avem același număr de produse găsite ca și în comanda
       if (existingProducts.length !== productIds.length) {
-        const foundIds = existingProducts.map(p => p.id)
+        const foundIds = existingProducts.map((p: Product) => p.id)
         const missingIds = productIds.filter(id => !foundIds.includes(id))
         console.log("Produse lipsă:", missingIds);
         return NextResponse.json({ 
@@ -128,11 +136,11 @@ export async function POST(req: Request) {
         }
       })
       
-      console.log("Bundle-uri găsite în baza de date:", existingBundles.map(b => b.id));
+      console.log("Bundle-uri găsite în baza de date:", existingBundles.map((b: Bundle) => b.id));
 
       // Verifică dacă avem același număr de pachete găsite ca și în comanda
       if (existingBundles.length !== bundleIds.length) {
-        const foundIds = existingBundles.map(b => b.id)
+        const foundIds = existingBundles.map((b: Bundle) => b.id)
         const missingIds = bundleIds.filter(id => !foundIds.includes(id))
         console.log("Bundle-uri lipsă:", missingIds);
         return NextResponse.json({ 

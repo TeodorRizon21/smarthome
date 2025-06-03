@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface SizeVariant {
+  size: string;
+  price: number;
+  oldPrice?: number | null;
+  stock: number;
+  lowStockThreshold?: number | null;
+}
+
 export async function GET(request: Request) {
   try {
     const products = await prisma.product.findMany({
@@ -46,11 +54,11 @@ export async function POST(request: Request) {
         pdfUrl,
         price: sizeVariants[0].price,
         oldPrice: sizeVariants[0].oldPrice,
-        sizes: sizeVariants.map((v: { size: string }) => v.size),
-        stock: sizeVariants.reduce((total: number, v: { stock: number }) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...sizeVariants.map((v: { lowStockThreshold: number | null }) => v.lowStockThreshold || Infinity)),
+        sizes: sizeVariants.map((v: SizeVariant) => v.size),
+        stock: sizeVariants.reduce((total: number, v: SizeVariant) => total + v.stock, 0),
+        lowStockThreshold: Math.min(...sizeVariants.map((v: SizeVariant) => v.lowStockThreshold || Infinity)),
         sizeVariants: {
-          create: sizeVariants.map((v: any) => ({
+          create: sizeVariants.map((v: SizeVariant) => ({
             size: v.size,
             price: v.price,
             oldPrice: v.oldPrice,
@@ -102,12 +110,12 @@ export async function PUT(request: Request) {
         pdfUrl,
         price: sizeVariants[0].price,
         oldPrice: sizeVariants[0].oldPrice,
-        sizes: sizeVariants.map((v: { size: string }) => v.size),
-        stock: sizeVariants.reduce((total: number, v: { stock: number }) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...sizeVariants.map((v: { lowStockThreshold: number | null }) => v.lowStockThreshold || Infinity)),
+        sizes: sizeVariants.map((v: SizeVariant) => v.size),
+        stock: sizeVariants.reduce((total: number, v: SizeVariant) => total + v.stock, 0),
+        lowStockThreshold: Math.min(...sizeVariants.map((v: SizeVariant) => v.lowStockThreshold || Infinity)),
         sizeVariants: {
           deleteMany: {},
-          create: sizeVariants.map(v => ({
+          create: sizeVariants.map((v: SizeVariant) => ({
             size: v.size,
             price: v.price,
             oldPrice: v.oldPrice,

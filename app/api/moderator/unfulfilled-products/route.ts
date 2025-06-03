@@ -1,6 +1,81 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+interface SizeVariant {
+  id: string;
+  size: string;
+  stock: number;
+  price: number;
+  oldPrice: number | null;
+  lowStockThreshold: number | null;
+  productId: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+  stock: number;
+  sizeVariants: SizeVariant[];
+}
+
+interface OrderItem {
+  id: string;
+  product: Product;
+  size: string;
+  quantity: number;
+}
+
+interface BundleItem {
+  id: string;
+  product: Product;
+  quantity: number;
+}
+
+interface Bundle {
+  items: BundleItem[];
+}
+
+interface BundleOrder {
+  bundle: Bundle;
+  quantity: number;
+}
+
+interface OrderDetails {
+  id: string;
+  userId?: string | null;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  county: string;
+  postalCode: string;
+  country: string;
+  isCompany: boolean;
+  companyName?: string;
+  companyCUI?: string;
+  companyRegNumber?: string;
+  companyAddress?: string;
+  companyCity?: string;
+  companyCounty?: string;
+}
+
+interface UnfulfilledOrder {
+  id: string;
+  userId: string | null;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentType: string;
+  courier?: string | null;
+  awb?: string | null;
+  createdAt: Date;
+  items: OrderItem[];
+  BundleOrder: BundleOrder[];
+  details: OrderDetails;
+}
+
 export async function GET() {
   try {
     // Obține comenzile care nu sunt finalizate
@@ -15,6 +90,7 @@ export async function GET() {
           include: {
             product: {
               select: {
+                id: true,
                 name: true,
                 images: true,
                 stock: true,
@@ -46,7 +122,7 @@ export async function GET() {
         },
         details: true
       }
-    });
+    }) as UnfulfilledOrder[];
 
     // Structura pentru a ține evidența produselor necesare
     type ProductNeed = {
@@ -62,18 +138,22 @@ export async function GET() {
     // Obiect pentru a ține evidența produselor și a cantităților
     const productNeeds: Record<string, ProductNeed> = {};
 
+    type UnfulfilledOrderItem = UnfulfilledOrder['items'][number];
+    type UnfulfilledBundleOrder = UnfulfilledOrder['BundleOrder'][number];
+    type UnfulfilledBundleItem = UnfulfilledBundleOrder['bundle']['items'][number];
+
     // Parcurge toate comenzile pentru a aduna produsele necesare
-    unfulfilledOrders.forEach(order => {
-      // Produse individuale din comenzi
-      order.items.forEach(item => {
-        const key = `${item.productId}_${item.size}`;
-        const sizeVariant = item.product.sizeVariants?.find(v => v.size === item.size);
+    unfulfilledOrders.forEach((order: UnfulfilledOrder) => {
+      // Verificăm produsele individuale
+      order.items.forEach((item: UnfulfilledOrderItem) => {
+        const key = `${item.product.id}_${item.size}`;
+        const sizeVariant = item.product.sizeVariants?.find((v: SizeVariant) => v.size === item.size);
         
         if (productNeeds[key]) {
           productNeeds[key].quantity += item.quantity;
         } else {
           productNeeds[key] = {
-            productId: item.productId,
+            productId: item.product.id,
             productName: item.product.name,
             size: item.size,
             quantity: item.quantity,
@@ -84,9 +164,9 @@ export async function GET() {
         }
       });
 
-      // Produse din bundle-uri
-      order.BundleOrder.forEach(bundleOrder => {
-        bundleOrder.bundle.items.forEach(bundleItem => {
+      // Verificăm produsele din bundle-uri
+      order.BundleOrder.forEach((bundleOrder: UnfulfilledBundleOrder) => {
+        bundleOrder.bundle.items.forEach((bundleItem: UnfulfilledBundleItem) => {
           // Pentru simplificare, produsele din bundle nu au specificată mărimea
           // Vom folosi "N/A" ca mărime pentru ele
           const key = `${bundleItem.product.id}_N/A`;
@@ -112,25 +192,23 @@ export async function GET() {
     const productNeedsArray = Object.values(productNeeds);
 
     // Pregătește o listă formatată a comenzilor nelivrate cu detaliile lor
-    const formattedOrders = unfulfilledOrders.map(order => {
-      // Calculează produsele necesare pentru această comandă
-      const orderProducts = order.items.map(item => ({
+    const formattedOrders = unfulfilledOrders.map((order: UnfulfilledOrder) => {
+      const orderProducts = order.items.map((item: UnfulfilledOrderItem) => ({
         id: item.id,
-        productId: item.productId,
+        productId: item.product.id,
         productName: item.product.name,
         size: item.size,
         quantity: item.quantity,
         image: item.product.images?.[0] || '/placeholder.svg',
         inStock: (() => {
-          const sizeVariant = item.product.sizeVariants?.find(v => v.size === item.size);
+          const sizeVariant = item.product.sizeVariants?.find((v: SizeVariant) => v.size === item.size);
           const stock = sizeVariant ? sizeVariant.stock : item.product.stock;
           return stock >= item.quantity;
         })()
       }));
 
-      // Adaugă produsele din bundle-uri
-      const bundleProducts = order.BundleOrder.flatMap(bundleOrder => 
-        bundleOrder.bundle.items.map(bundleItem => ({
+      const bundleProducts = order.BundleOrder.flatMap((bundleOrder: UnfulfilledBundleOrder) =>
+        bundleOrder.bundle.items.map((bundleItem: UnfulfilledBundleItem) => ({
           id: bundleItem.id,
           productId: bundleItem.product.id,
           productName: bundleItem.product.name,

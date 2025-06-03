@@ -5,6 +5,14 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
+
 export async function POST(request: Request) {
   try {
     const adminStatus = await isAdmin();
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     // Trimite email-ul către fiecare abonat
-    const emailPromises = subscribers.map(async (subscriber) => {
+    const emailPromises = subscribers.map(async (subscriber: NewsletterSubscriber) => {
       const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/newsletter/unsubscribe?email=${encodeURIComponent(
         subscriber.email
       )}`;

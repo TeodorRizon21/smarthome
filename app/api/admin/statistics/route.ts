@@ -1,13 +1,62 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: Request) {
+export const dynamic = 'force-dynamic'
+
+interface OrderDetails {
+  id: string;
+  userId?: string | null;
+  fullName: string;
+  email: string;
+  county: string;
+}
+
+interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  size: string;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    images: string[];
+    collections: string[];
+  };
+}
+
+interface Order {
+  id: string;
+  userId: string | null;
+  total: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentType: string;
+  courier?: string | null;
+  awb?: string | null;
+  createdAt: Date;
+  items: OrderItem[];
+  details: OrderDetails;
+}
+
+interface CustomerData {
+  orderCount: number;
+  totalSpent: number;
+  orders: Array<{
+    id: string;
+    createdAt: Date;
+    total: number;
+    status: string;
+  }>;
+}
+
+export async function GET(request: Request, { params, searchParams }: { params: {}; searchParams: { [key: string]: string | string[] | undefined } }) {
   try {
-    const { searchParams } = new URL(request.url)
-    const timeRange = searchParams.get('timeRange') || '24h'
-    const county = searchParams.get('county')
-    const category = searchParams.get('category')
-    const showCompletedOnly = searchParams.get('showCompletedOnly') === 'true'
+    const timeRange = searchParams.timeRange?.toString() || '24h'
+    const county = searchParams.county?.toString()
+    const category = searchParams.category?.toString()
+    const showCompletedOnly = searchParams.showCompletedOnly === 'true'
 
     let startDate = new Date()
     let interval: 'hour' | 'day' | 'week' | 'month' = 'hour'
@@ -128,7 +177,7 @@ export async function GET(request: Request) {
     }
 
     // Adăugăm veniturile pentru fiecare interval
-    orders.forEach(order => {
+    orders.forEach((order: Order) => {
       const roundedDate = roundDate(order.createdAt, interval)
       const key = roundedDate.toISOString()
       const existing = timelineMap.get(key) || { revenue: 0 }
@@ -152,8 +201,8 @@ export async function GET(request: Request) {
       category: string 
     }>()
     
-    orders.forEach(order => {
-      order.items.forEach(item => {
+    orders.forEach((order: Order) => {
+      order.items.forEach((item: OrderItem) => {
         const existing = productMap.get(item.productId) || {
           name: item.product.name,
           totalSales: 0,
@@ -177,22 +226,11 @@ export async function GET(request: Request) {
     }
 
     // Calculăm statistici pentru clienți
-    const customerMap = new Map<string, { 
-      email: string, 
-      orderCount: number, 
-      totalSpent: number,
-      orders: Array<{
-        id: string,
-        createdAt: Date,
-        total: number,
-        status: string
-      }>
-    }>()
+    const customerMap = new Map<string, CustomerData>()
 
-    orders.forEach(order => {
+    orders.forEach((order: Order) => {
       if (order.details.email) {
         const existing = customerMap.get(order.details.email) || {
-          email: order.details.email,
           orderCount: 0,
           totalSpent: 0,
           orders: []
@@ -221,7 +259,7 @@ export async function GET(request: Request) {
       totalRevenue: number 
     }>()
 
-    orders.forEach(order => {
+    orders.forEach((order: Order) => {
       const existing = countyMap.get(order.details.county) || {
         orderCount: 0,
         totalRevenue: 0
@@ -237,10 +275,9 @@ export async function GET(request: Request) {
     }))
 
     // Calculăm totaluri
-    const totalSales = orders.reduce((acc, order) => 
-      acc + order.items.reduce((itemAcc, item) => itemAcc + item.quantity, 0), 0
-    )
-    const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0)
+    const totalSales = orders.reduce((acc: number, order: Order) =>
+      acc + order.items.reduce((itemAcc: number, item: OrderItem) => itemAcc + item.quantity, 0), 0)
+    const totalRevenue = orders.reduce((acc: number, order: Order) => acc + order.total, 0)
 
     return NextResponse.json({
       timeline,

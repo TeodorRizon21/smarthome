@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@prisma/client";
+import { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +27,10 @@ type EditProductFormProps = {
 };
 
 export default function EditProductForm({ product }: EditProductFormProps) {
-  const [editedProduct, setEditedProduct] = useState<Product>(product);
+  const [editedProduct, setEditedProduct] = useState<Product>({
+    ...product,
+    pdfUrl: product.pdfUrl || null,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -361,7 +365,7 @@ export default function EditProductForm({ product }: EditProductFormProps) {
       <div className="space-y-2">
         <Label>PDF Instrucțiuni</Label>
         <PDFUpload
-          value={editedProduct.pdfUrl}
+          value={editedProduct.pdfUrl ?? null}
           onChange={(url) =>
             setEditedProduct((prevState) => ({ ...prevState, pdfUrl: url }))
           }

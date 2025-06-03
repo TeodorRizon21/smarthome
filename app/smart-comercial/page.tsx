@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import ProductCarousel from '@/components/ProductCarousel';
 import Newsletter from '@/components/Newsletter';
 import { prisma } from '@/lib/prisma';
+import type { Product, SizeVariant } from '@/lib/types';
 
 const businessSolutions = [
   {
@@ -96,11 +97,44 @@ const implementationSteps = [
 ];
 
 export default async function SmartComercialPage() {
-  let products = await prisma.product.findMany({
+  type PrismaProduct = Awaited<ReturnType<typeof prisma.product.findMany>>[number] & {
+    sizeVariants: SizeVariant[];
+    tags?: string[];
+  };
+  
+  const products = await prisma.product.findMany({
     include: { sizeVariants: true },
     orderBy: { createdAt: 'desc' },
   });
-  products = products.map((p) => ({ ...p, pdfUrl: p.pdfUrl ?? null }));
+
+  const productsWithDefaults = products.map((product: PrismaProduct) => {
+    // Calculate aggregate values from sizeVariants
+    const minVariant = product.sizeVariants.reduce((min: SizeVariant | null, variant: SizeVariant) => 
+      (!min || variant.price < min.price) ? variant : min
+    , product.sizeVariants[0]);
+
+    const totalStock = product.sizeVariants.reduce((sum: number, variant: SizeVariant) => 
+      sum + variant.stock
+    , 0);
+
+    const minLowStockThreshold = product.sizeVariants.reduce((min: number | null, variant: SizeVariant) => {
+      const threshold = variant.lowStockThreshold ?? null;
+      if (threshold === null) return min;
+      if (min === null) return threshold;
+      return threshold < min ? threshold : min;
+    }, null);
+
+    return {
+      ...product,
+      pdfUrl: product.pdfUrl ?? null,
+      price: minVariant?.price ?? 0,
+      oldPrice: minVariant?.oldPrice ?? null,
+      sizes: product.sizeVariants.map((v: SizeVariant) => v.size),
+      stock: totalStock,
+      lowStockThreshold: minLowStockThreshold,
+      tags: product.tags ?? [],
+    } satisfies Product;
+  });
 
   return (
     <main className="min-h-screen bg-white">

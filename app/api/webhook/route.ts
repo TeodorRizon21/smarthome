@@ -10,6 +10,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
+interface SessionMetadata {
+  userId?: string;
+  detailsId: string;
+  items?: string;
+  regularItems?: string;
+  bundleItems?: string;
+}
+
 export async function POST(req: Request) {
   console.log('=== WEBHOOK STARTED ===');
   console.log('Environment variables:');
@@ -45,7 +53,12 @@ export async function POST(req: Request) {
     console.log('Session amount total:', session.amount_total);
 
     try {
-      const { userId, detailsId, items, regularItems, bundleItems } = session.metadata as any;
+      if (!session.metadata) {
+        throw new Error('Session metadata is missing');
+      }
+      
+      const metadata = session.metadata as unknown as SessionMetadata;
+      const { userId, detailsId, items, regularItems, bundleItems } = metadata;
       console.log('Parsed metadata:', { userId, detailsId, items, regularItems, bundleItems });
 
       if (!detailsId) {

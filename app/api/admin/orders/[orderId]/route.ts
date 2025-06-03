@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 export async function DELETE(
   request: Request,
@@ -9,35 +10,20 @@ export async function DELETE(
     const { orderId } = params
 
     // Use a transaction to ensure all operations succeed or fail together
-    await prisma.$transaction(async (prisma) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // First, delete associated OrderDiscountCode entries
-      await prisma.orderDiscountCode.deleteMany({
+      await tx.orderDiscountCode.deleteMany({
         where: { orderId: orderId },
       })
 
-      // Delete the order items
-      await prisma.orderItem.deleteMany({
+      // Then delete associated OrderItem entries
+      await tx.orderItem.deleteMany({
         where: { orderId: orderId },
       })
 
-      // Find the order to get the detailsId
-      const order = await prisma.order.findUnique({
+      // Finally delete the order itself
+      await tx.order.delete({
         where: { id: orderId },
-        select: { detailsId: true },
-      })
-
-      if (!order) {
-        throw new Error('Order not found')
-      }
-
-      // Delete the order
-      await prisma.order.delete({
-        where: { id: orderId },
-      })
-
-      // Delete the order details
-      await prisma.orderDetails.delete({
-        where: { id: order.detailsId },
       })
     })
 

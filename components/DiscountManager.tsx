@@ -308,7 +308,7 @@ export default function DiscountManager() {
                 <TableCell>{discountCode.expirationDate || 'No expiration'}</TableCell>
                 <TableCell>{discountCode.canCumulate ? 'Yes' : 'No'}</TableCell>
                 <TableCell>
-                  <Badge variant={isDiscountCodeActive(discountCode) ? "success" : "destructive"}>
+                  <Badge variant={isDiscountCodeActive(discountCode) ? "secondary" : "destructive"}>
                     {isDiscountCodeActive(discountCode) ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>

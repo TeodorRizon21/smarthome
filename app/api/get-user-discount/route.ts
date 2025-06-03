@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
+import { headers } from 'next/headers';
+
+export const dynamic = 'force-dynamic'
 
 interface UserDiscount {
   type: 'percentage' | 'free_shipping' | 'fixed';
@@ -11,6 +14,7 @@ interface UserDiscount {
 
 export async function GET(request: Request) {
   try {
+    const headersList = headers();
     const { userId } = await auth();
     
     // Verificăm dacă utilizatorul este autentificat

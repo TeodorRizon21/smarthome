@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/cart-context";
 import { loadStripe } from "@stripe/stripe-js";
 import { X } from "lucide-react";
+import type { UserDiscount } from "@/lib/types";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -94,7 +95,7 @@ export default function OrderDetailsForm({ userId }: { userId?: string }) {
   >([]);
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [savedDetails, setSavedDetails] = useState<any>(null);
-  const [userDiscounts, setUserDiscounts] = useState<UserDiscount | null>(null);
+  const [userDiscounts, setUserDiscounts] = useState<UserDiscount[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -143,7 +144,7 @@ export default function OrderDetailsForm({ userId }: { userId?: string }) {
           // Verificăm dacă nu avem deja discounturi aplicate
           if (appliedDiscounts.length === 0) {
             // Adăugăm toate discounturile utilizatorului
-            const userDiscounts = data.discounts.map((discount) => ({
+            const userDiscounts = data.discounts.map((discount: UserDiscount) => ({
               code: discount.code,
               value:
                 discount.type === "percentage" || discount.type === "fixed"

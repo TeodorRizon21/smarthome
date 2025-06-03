@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { COLLECTIONS } from '@/lib/collections'
 import CollectionContent from '@/components/CollectionContent'
 
+type CollectionValue = typeof COLLECTIONS[keyof typeof COLLECTIONS];
+
 export default function CollectionPage({ 
   params,
   searchParams 
@@ -10,11 +12,16 @@ export default function CollectionPage({
   searchParams: { sort?: string }
 }) {
   // Verify valid collection
-  const decodedName = decodeURIComponent(params.name) as keyof typeof COLLECTIONS;
+  const decodedName = decodeURIComponent(params.name);
   if (decodedName === 'Smart Residence') {
     redirect('/smart-residence');
   }
-  if (!Object.values(COLLECTIONS).includes(decodedName)) {
+  
+  const isValidCollection = (name: string): name is CollectionValue => {
+    return Object.values(COLLECTIONS).includes(name as CollectionValue);
+  };
+
+  if (!isValidCollection(decodedName)) {
     redirect('/')
   }
 
