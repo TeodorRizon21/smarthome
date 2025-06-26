@@ -9,24 +9,23 @@ generator client {
 
 model Product {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
-  productCode       String        @unique
   name              String
   description       String
   price             Float
   oldPrice          Float?
   images            String[]
-  sizes             String[]
-  collections       String[]
+  category          String        // "Video Door Phone", "Home and Building Control System", "SALE"
+  subcategory       String?       // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   stock             Int
   allowOutOfStock   Boolean
   lowStockThreshold Int?
   showStockLevel    Boolean
   pdfUrl            String? // URL-ul către PDF-ul produsului
-  tags              String[]      @default([])
+  tags              String[]     @default([])
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   OrderItem         OrderItem[]
-  sizeVariants      SizeVariant[]
+  colorVariants     ColorVariant[]
   BundleItem        BundleItem[]
 }
 
@@ -113,10 +112,11 @@ model HeroSettings {
   interval Int    @default(5000)
 }
 
-model SizeVariant {
+model ColorVariant {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId
   productId         String  @db.ObjectId
-  size              String
+  productCode       String  @unique
+  color             String
   price             Float
   oldPrice          Float?
   stock             Int

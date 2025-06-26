@@ -9,7 +9,7 @@ async function getProduct(id: string): Promise<ProductWithVariants | null> {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        sizeVariants: true,
+        colorVariants: true,
       },
     });
     return product as ProductWithVariants | null;
@@ -30,7 +30,7 @@ async function getOtherProducts(
         },
       },
       include: {
-        sizeVariants: true,
+        colorVariants: true,
       },
     });
   } catch (error) {
@@ -44,7 +44,7 @@ export default async function ProductPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { size?: string };
+  searchParams: { color?: string };
 }) {
   const product = await getProduct(params.id);
   const otherProducts = await getOtherProducts(params.id);
@@ -55,7 +55,7 @@ export default async function ProductPage({
 
   return (
     <div className="space-y-16 mb-16">
-      <ProductDetails product={product} initialSize={searchParams.size} />
+      <ProductDetails product={product} initialColor={searchParams.color} />
       <RelatedProducts products={otherProducts} currentProductId={params.id} />
     </div>
   );

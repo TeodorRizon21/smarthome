@@ -10,13 +10,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 import type { Product } from "@/lib/types";
-import { COLLECTIONS } from "@/lib/collections";
+import { CATEGORIES, VDP_SUBCATEGORIES } from "@/lib/categories";
 import { Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface SizeVariant {
+interface ColorVariant {
   id?: string;
-  size: string;
+  productCode: string;
+  color: string;
   price: string;
   oldPrice: string;
   stock: string;
@@ -25,9 +33,10 @@ interface SizeVariant {
 
 type AdminPanelProps = {
   product?: Product & {
-    sizeVariants: Array<{
+    colorVariants: Array<{
       id: string;
-      size: string;
+      productCode: string;
+      color: string;
       price: number;
       oldPrice: number | null;
       stock: number;
@@ -38,11 +47,13 @@ type AdminPanelProps = {
 
 export default function AdminPanel({ product }: AdminPanelProps) {
   const [name, setName] = useState(product?.name || "");
-  const [productCode, setProductCode] = useState(product?.productCode || "");
   const [description, setDescription] = useState(product?.description || "");
   const [images, setImages] = useState<string[]>(product?.images || []);
-  const [collections, setCollections] = useState<string[]>(
-    product?.collections || [COLLECTIONS.ALL]
+  const [category, setCategory] = useState<string>(
+    product?.category || CATEGORIES.VIDEO_DOOR_PHONE
+  );
+  const [subcategory, setSubcategory] = useState<string>(
+    product?.subcategory || ""
   );
   const [allowOutOfStock, setAllowOutOfStock] = useState(
     product?.allowOutOfStock || false
@@ -50,18 +61,20 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   const [showStockLevel, setShowStockLevel] = useState(
     product?.showStockLevel || false
   );
-  const [sizeVariants, setSizeVariants] = useState<SizeVariant[]>(
-    product?.sizeVariants.map(
+  const [colorVariants, setColorVariants] = useState<ColorVariant[]>(
+    product?.colorVariants.map(
       (variant: {
         id: string;
-        size: string;
+        productCode: string;
+        color: string;
         price: number;
         oldPrice: number | null;
         stock: number;
         lowStockThreshold: number | null;
       }) => ({
         id: variant.id,
-        size: variant.size,
+        productCode: variant.productCode,
+        color: variant.color,
         price: variant.price.toString(),
         oldPrice: variant.oldPrice?.toString() || "",
         stock: variant.stock.toString(),
@@ -72,24 +85,12 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleCollectionToggle = (collection: string) => {
-    if (collection === COLLECTIONS.ALL) return;
-    if (collection === COLLECTIONS.SALES) return;
-
-    setCollections((prev) => {
-      if (prev.includes(collection)) {
-        return prev.filter((c) => c !== collection);
-      } else {
-        return [...prev, collection];
-      }
-    });
-  };
-
-  const addSizeVariant = () => {
-    setSizeVariants([
-      ...sizeVariants,
+  const addColorVariant = () => {
+    setColorVariants([
+      ...colorVariants,
       {
-        size: "",
+        productCode: "",
+        color: "",
         price: "",
         oldPrice: "",
         stock: "0",
@@ -98,45 +99,33 @@ export default function AdminPanel({ product }: AdminPanelProps) {
     ]);
   };
 
-  const removeSizeVariant = (index: number) => {
-    setSizeVariants(sizeVariants.filter((_, i) => i !== index));
+  const removeColorVariant = (index: number) => {
+    setColorVariants(colorVariants.filter((_, i) => i !== index));
   };
 
-  const updateSizeVariant = (
+  const updateColorVariant = (
     index: number,
-    field: keyof SizeVariant,
+    field: keyof ColorVariant,
     value: string
   ) => {
-    const newVariants = [...sizeVariants];
+    const newVariants = [...colorVariants];
     newVariants[index] = { ...newVariants[index], [field]: value };
-    setSizeVariants(newVariants);
+    setColorVariants(newVariants);
 
-    // Update collections if any variant has an old price
+    // Auto-add to SALE category if any variant has an old price
     const hasOldPrice = newVariants.some(
       (variant) =>
         variant.oldPrice &&
         parseFloat(variant.oldPrice) > parseFloat(variant.price)
     );
-    if (hasOldPrice && !collections.includes(COLLECTIONS.SALES)) {
-      setCollections((prev) => [...prev, COLLECTIONS.SALES]);
-    } else if (!hasOldPrice) {
-      setCollections((prev) => prev.filter((c) => c !== COLLECTIONS.SALES));
+    if (hasOldPrice && category !== CATEGORIES.SALE) {
+      setCategory(CATEGORIES.SALE);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    if (!productCode) {
-      toast({
-        title: "Error",
-        description: "Please enter a product code",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
 
     if (images.length === 0) {
       toast({
@@ -148,22 +137,33 @@ export default function AdminPanel({ product }: AdminPanelProps) {
       return;
     }
 
-    if (sizeVariants.length === 0) {
+    if (colorVariants.length === 0) {
       toast({
         title: "Error",
-        description: "Please add at least one size variant",
+        description: "Please add at least one color variant",
         variant: "destructive",
       });
       setIsLoading(false);
       return;
     }
 
-    // Validate size variants
-    for (const variant of sizeVariants) {
-      if (!variant.size || !variant.price) {
+    // Validate category and subcategory
+    if (category === CATEGORIES.VIDEO_DOOR_PHONE && !subcategory) {
+      toast({
+        title: "Error",
+        description: "Please select a subcategory for Video Door Phone",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate color variants
+    for (const variant of colorVariants) {
+      if (!variant.productCode || !variant.color || !variant.price) {
         toast({
           title: "Error",
-          description: "All size variants must have a size and price",
+          description: "All color variants must have a product code, color, and price",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -194,15 +194,16 @@ export default function AdminPanel({ product }: AdminPanelProps) {
           },
           body: JSON.stringify({
             name,
-            productCode,
             description,
             images,
-            collections,
+            category,
+            subcategory: category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
             allowOutOfStock,
             showStockLevel,
-            sizeVariants: sizeVariants.map((variant) => ({
+            colorVariants: colorVariants.map((variant) => ({
               id: variant.id,
-              size: variant.size,
+              productCode: variant.productCode,
+              color: variant.color,
               price: parseFloat(variant.price),
               oldPrice: variant.oldPrice ? parseFloat(variant.oldPrice) : null,
               stock: parseInt(variant.stock),
@@ -244,15 +245,6 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       <div>
-        <Label htmlFor="productCode">Product Code</Label>
-        <Input
-          id="productCode"
-          value={productCode}
-          onChange={(e) => setProductCode(e.target.value)}
-          required
-        />
-      </div>
-      <div>
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"
@@ -273,24 +265,38 @@ export default function AdminPanel({ product }: AdminPanelProps) {
       </div>
 
       <div>
-        <Label>Collections</Label>
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          {Object.values(COLLECTIONS).map((collection) => (
-            <div key={collection} className="flex items-center space-x-2">
-              <Checkbox
-                id={`collection-${collection}`}
-                checked={collections.includes(collection)}
-                onCheckedChange={() => handleCollectionToggle(collection)}
-                disabled={
-                  collection === COLLECTIONS.ALL ||
-                  collection === COLLECTIONS.SALES
-                }
-              />
-              <Label htmlFor={`collection-${collection}`}>{collection}</Label>
-            </div>
-          ))}
-        </div>
+        <Label htmlFor="category">Category</Label>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(CATEGORIES).map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
+      {category === CATEGORIES.VIDEO_DOOR_PHONE && (
+        <div>
+          <Label htmlFor="subcategory">Subcategory</Label>
+          <Select value={subcategory} onValueChange={setSubcategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a subcategory" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(VDP_SUBCATEGORIES).map((subcat) => (
+                <SelectItem key={subcat} value={subcat}>
+                  {subcat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div>
         <Label>Product Images (up to 10)</Label>
@@ -303,23 +309,33 @@ export default function AdminPanel({ product }: AdminPanelProps) {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label>Size Variants</Label>
-          <Button type="button" onClick={addSizeVariant}>
-            Add Size Variant
+          <Label>Color Variants</Label>
+          <Button type="button" onClick={addColorVariant}>
+            Add Color Variant
           </Button>
         </div>
 
         <div className="space-y-4">
-          {sizeVariants.map((variant, index) => (
+          {colorVariants.map((variant, index) => (
             <Card key={index}>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Size</Label>
+                    <Label>Product Code</Label>
                     <Input
-                      value={variant.size}
+                      value={variant.productCode}
                       onChange={(e) =>
-                        updateSizeVariant(index, "size", e.target.value)
+                        updateColorVariant(index, "productCode", e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Color</Label>
+                    <Input
+                      value={variant.color}
+                      onChange={(e) =>
+                        updateColorVariant(index, "color", e.target.value)
                       }
                       required
                     />
@@ -331,7 +347,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       step="0.01"
                       value={variant.price}
                       onChange={(e) =>
-                        updateSizeVariant(index, "price", e.target.value)
+                        updateColorVariant(index, "price", e.target.value)
                       }
                       required
                     />
@@ -343,7 +359,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       step="0.01"
                       value={variant.oldPrice}
                       onChange={(e) =>
-                        updateSizeVariant(index, "oldPrice", e.target.value)
+                        updateColorVariant(index, "oldPrice", e.target.value)
                       }
                     />
                   </div>
@@ -353,7 +369,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       type="number"
                       value={variant.stock}
                       onChange={(e) =>
-                        updateSizeVariant(index, "stock", e.target.value)
+                        updateColorVariant(index, "stock", e.target.value)
                       }
                       required
                     />
@@ -365,7 +381,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                         type="number"
                         value={variant.lowStockThreshold}
                         onChange={(e) =>
-                          updateSizeVariant(
+                          updateColorVariant(
                             index,
                             "lowStockThreshold",
                             e.target.value
@@ -379,7 +395,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeSizeVariant(index)}
+                      onClick={() => removeColorVariant(index)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

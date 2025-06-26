@@ -4,13 +4,13 @@ import Newsletter from "@/components/Newsletter";
 import { prisma } from "@/lib/prisma";
 import BundleShowcase from "@/components/BundleShowcase";
 import InstallationShowcase from "@/components/InstallationShowcase";
-import type { ProductWithVariants, Product, SizeVariant } from "@/lib/types";
+import type { ProductWithVariants, Product, ColorVariant } from "@/lib/types";
 
 async function getProducts(): Promise<ProductWithVariants[]> {
   try {
     const products = await prisma.product.findMany({
       include: {
-        sizeVariants: true,
+        colorVariants: true,
       },
       take: 8,
       orderBy: {
@@ -23,24 +23,25 @@ async function getProducts(): Promise<ProductWithVariants[]> {
       name: string;
       description: string;
       images: string[];
-      collections: string[];
+      category: string;
+      subcategory: string | null;
       allowOutOfStock: boolean;
       showStockLevel: boolean;
       pdfUrl: string | null;
       createdAt: Date;
       updatedAt: Date;
-      sizeVariants: SizeVariant[];
+      colorVariants: ColorVariant[];
     }) => {
-      // Calculate aggregate values from sizeVariants
-      const minVariant = product.sizeVariants.reduce((min: SizeVariant | null, variant: SizeVariant) => 
+      // Calculate aggregate values from colorVariants
+      const minVariant = product.colorVariants.reduce((min: ColorVariant | null, variant: ColorVariant) => 
         (!min || variant.price < min.price) ? variant : min
-      , product.sizeVariants[0]);
+      , product.colorVariants[0]);
 
-      const totalStock = product.sizeVariants.reduce((sum: number, variant: SizeVariant) => 
+      const totalStock = product.colorVariants.reduce((sum: number, variant: ColorVariant) => 
         sum + variant.stock
       , 0);
 
-      const minLowStockThreshold = product.sizeVariants.reduce((min: number | null, variant: SizeVariant) => {
+      const minLowStockThreshold = product.colorVariants.reduce((min: number | null, variant: ColorVariant) => {
         const threshold = variant.lowStockThreshold ?? null;
         if (threshold === null) return min;
         if (min === null) return threshold;
@@ -52,10 +53,11 @@ async function getProducts(): Promise<ProductWithVariants[]> {
         name: product.name,
         description: product.description,
         images: product.images,
-        collections: product.collections,
+        category: product.category,
+        subcategory: product.subcategory || undefined,
         price: minVariant?.price ?? 0,
         oldPrice: minVariant?.oldPrice ?? null,
-        sizes: product.sizeVariants.map((v: SizeVariant) => v.size),
+        sizes: product.colorVariants.map((v: ColorVariant) => v.color),
         stock: totalStock,
         lowStockThreshold: minLowStockThreshold,
         allowOutOfStock: product.allowOutOfStock,
@@ -64,7 +66,7 @@ async function getProducts(): Promise<ProductWithVariants[]> {
         tags: [],
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
-        sizeVariants: product.sizeVariants,
+        colorVariants: product.colorVariants,
       };
     });
   } catch (error) {
@@ -93,6 +95,7 @@ async function getBundles() {
             },
           },
         },
+        BundleOrder: true,
       },
       take: 6,
       orderBy: {
@@ -211,7 +214,7 @@ export default async function Home() {
             <h2 className="text-3xl font-bold text-center mb-12">
               Pachete Smart Home
             </h2>
-            <BundleShowcase bundles={bundles} />
+            <BundleShowcase bundles={bundles as any} />
           </div>
         </section>
       )}

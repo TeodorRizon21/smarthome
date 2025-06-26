@@ -17,33 +17,33 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ProductWithVariants, SizeVariant } from "@/lib/types";
+import { ProductWithVariants, ColorVariant } from "@/lib/types";
 import { ShoppingCart } from "lucide-react";
 
 interface AddToCartButtonProps {
   product: ProductWithVariants;
-  selectedSize?: string;
+  selectedColor?: string;
   className?: string;
 }
 
 export default function AddToCartButton({
   product,
-  selectedSize: propSelectedSize,
+  selectedColor: propSelectedColor,
   className,
 }: AddToCartButtonProps) {
-  const [selectedSize, setSelectedSize] = useState<string>(
-    propSelectedSize || ""
+  const [selectedColor, setSelectedColor] = useState<string>(
+    propSelectedColor || ""
   );
   const { dispatch, state } = useCart();
 
   useEffect(() => {
-    if (propSelectedSize) {
-      setSelectedSize(propSelectedSize);
+    if (propSelectedColor) {
+      setSelectedColor(propSelectedColor);
     }
-  }, [propSelectedSize]);
+  }, [propSelectedColor]);
 
-  const selectedVariant = product.sizeVariants
-    ? product.sizeVariants.find((v) => v.size === selectedSize)
+  const selectedVariant = product.colorVariants
+    ? product.colorVariants.find((v) => v.color === selectedColor)
     : undefined;
   const isOutOfStock =
     !selectedVariant ||
@@ -52,7 +52,7 @@ export default function AddToCartButton({
   // Calculate remaining stock for the selected variant
   const currentCartQuantity = state.items
     .filter(
-      (i) => i.product.id === product.id && i.selectedSize === selectedSize
+      (i) => i.product.id === product.id && i.selectedColor === selectedColor
     )
     .reduce((acc, i) => acc + i.quantity, 0);
   const remainingStock = selectedVariant
@@ -62,13 +62,13 @@ export default function AddToCartButton({
     : 0;
 
   const handleAddToCart = () => {
-    const selectedVariant = product.sizeVariants.find(
-      (v) => v.size === selectedSize
+    const selectedVariant = product.colorVariants.find(
+      (v) => v.color === selectedColor
     );
     if (!selectedVariant) {
       toast({
         title: "Error",
-        description: "Please select a size.",
+        description: "Please select a color.",
         variant: "destructive",
       });
       return;
@@ -77,7 +77,7 @@ export default function AddToCartButton({
     if (isOutOfStock) {
       toast({
         title: "Cannot add to cart",
-        description: "This product is out of stock for the selected size.",
+        description: "This product is out of stock for the selected color.",
         variant: "destructive",
       });
       return;
@@ -86,7 +86,7 @@ export default function AddToCartButton({
     if (remainingStock === 0) {
       toast({
         title: "Maximum quantity reached",
-        description: `You already have all available items (${currentCartQuantity}) for this size in your cart.`,
+        description: `You already have all available items (${currentCartQuantity}) for this color in your cart.`,
         variant: "destructive",
       });
       return;
@@ -96,14 +96,14 @@ export default function AddToCartButton({
       type: "ADD_TO_CART",
       payload: {
         product,
-        size: selectedSize,
+        color: selectedColor,
         variant: selectedVariant,
         quantity: 1,
       },
     });
     toast({
       title: "Added to cart",
-      description: `${product.name} (${selectedSize}) has been added to your cart.`,
+      description: `${product.name} (${selectedColor}) has been added to your cart.`,
     });
   };
 
@@ -131,7 +131,7 @@ export default function AddToCartButton({
         <Tooltip>
           <TooltipTrigger asChild>{button}</TooltipTrigger>
           <TooltipContent>
-            <p>This product is currently out of stock for the selected size</p>
+            <p>This product is currently out of stock for the selected color</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -140,32 +140,32 @@ export default function AddToCartButton({
 
   return (
     <div className="flex gap-2">
-      {!propSelectedSize && (
-        <Select value={selectedSize} onValueChange={setSelectedSize}>
+      {!propSelectedColor && (
+        <Select value={selectedColor} onValueChange={setSelectedColor}>
           <SelectTrigger className="w-24">
-            <SelectValue placeholder="Size" />
+            <SelectValue placeholder="Color" />
           </SelectTrigger>
           <SelectContent>
-            {product.sizeVariants.map((sizeVariant) => {
+            {product.colorVariants.map((colorVariant) => {
               const cartQuantity = state.items
                 .filter(
                   (i) =>
                     i.product.id === product.id &&
-                    i.selectedSize === sizeVariant.size
+                    i.selectedColor === colorVariant.color
                 )
                 .reduce((acc, i) => acc + i.quantity, 0);
               const remaining = product.allowOutOfStock
                 ? Infinity
-                : Math.max(0, sizeVariant.stock - cartQuantity);
+                : Math.max(0, colorVariant.stock - cartQuantity);
 
               return (
                 <SelectItem
-                  key={sizeVariant.size}
-                  value={sizeVariant.size}
-                  disabled={sizeVariant.stock === 0 && !product.allowOutOfStock}
+                  key={colorVariant.color}
+                  value={colorVariant.color}
+                  disabled={colorVariant.stock === 0 && !product.allowOutOfStock}
                 >
-                  {sizeVariant.size}
-                  {sizeVariant.stock === 0 && !product.allowOutOfStock
+                  {colorVariant.color}
+                  {colorVariant.stock === 0 && !product.allowOutOfStock
                     ? " (Out of Stock)"
                     : remaining === 0
                     ? ` (${cartQuantity} in cart)`

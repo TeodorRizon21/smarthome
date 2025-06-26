@@ -22,9 +22,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface SizeVariant {
+interface ColorVariant {
   id: string;
-  size: string;
+  productCode: string;
+  color: string;
   price: number;
   oldPrice: number | null;
   stock: number;
@@ -34,10 +35,11 @@ interface SizeVariant {
 interface ProductWithVariants {
   id: string;
   name: string;
-  productCode: string;
   description: string;
   images: string[];
-  sizeVariants: SizeVariant[];
+  category: string;
+  subcategory?: string;
+  colorVariants: ColorVariant[];
   allowOutOfStock: boolean;
   showStockLevel: boolean;
 }
@@ -116,8 +118,8 @@ export default function AdminProductList() {
         <TableHeader>
           <TableRow className="bg-gray-50">
             <TableHead className="w-[300px]">Product</TableHead>
-            <TableHead>Code</TableHead>
-            <TableHead>Price</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Variants</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -142,29 +144,36 @@ export default function AdminProductList() {
                 </div>
               </TableCell>
               <TableCell>
-                <div className="font-mono">{product.productCode}</div>
+                <div className="space-y-1">
+                  <div className="font-medium">{product.category}</div>
+                  {product.subcategory && (
+                    <div className="text-sm text-gray-500">{product.subcategory}</div>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {product.sizeVariants.map((variant) => (
+                  {product.colorVariants?.map((variant) => (
                     <div key={variant.id} className="text-sm">
-                      {variant.size}: ${variant.price.toFixed(2)}
+                      <div className="font-medium">{variant.color}</div>
+                      <div className="text-gray-500">{variant.productCode}</div>
+                      <div className="font-medium">${variant.price.toFixed(2)}</div>
                     </div>
                   ))}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {product.sizeVariants.map((variant) => (
+                  {product.colorVariants?.map((variant) => (
                     <div key={variant.id} className="text-sm">
-                      {variant.size}: {variant.stock}
+                      {variant.color}: {variant.stock}
                     </div>
                   ))}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {product.sizeVariants.map((variant) => (
+                  {product.colorVariants?.map((variant) => (
                     <div key={variant.id}>
                       {variant.stock === 0 && !product.allowOutOfStock ? (
                         <Badge

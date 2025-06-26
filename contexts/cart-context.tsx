@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, useReducer, useEffect } from "react";
-import { ProductWithVariants, SizeVariant } from "@/lib/types";
+import { ProductWithVariants, ColorVariant } from "@/lib/types";
 
 type CartItem = {
   product: ProductWithVariants;
   quantity: number;
-  selectedSize: string;
-  variant: SizeVariant;
+  selectedColor: string;
+  variant: ColorVariant;
 };
 
 type CartState = {
@@ -20,15 +20,15 @@ type CartAction =
       type: "ADD_TO_CART";
       payload: {
         product: ProductWithVariants;
-        size: string;
-        variant: SizeVariant;
+        color: string;
+        variant: ColorVariant;
         quantity: number;
       };
     }
-  | { type: "REMOVE_FROM_CART"; payload: { productId: string; size: string } }
+  | { type: "REMOVE_FROM_CART"; payload: { productId: string; color: string } }
   | {
       type: "UPDATE_QUANTITY";
-      payload: { productId: string; size: string; quantity: number };
+      payload: { productId: string; color: string; quantity: number };
     }
   | { type: "LOAD_CART"; payload: CartState }
   | { type: "CLEAR_CART" };
@@ -44,12 +44,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const existingItemIndex = state.items.findIndex(
         (item) =>
           item.product.id === action.payload.product.id &&
-          item.selectedSize === action.payload.size
+          item.selectedColor === action.payload.color
       );
 
       // Get the variant's stock limit
-      const variant = action.payload.product.sizeVariants.find(
-        (v) => v.size === action.payload.size
+      const variant = action.payload.product.colorVariants.find(
+        (v) => v.color === action.payload.color
       );
       if (!variant) return state;
 
@@ -82,7 +82,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           {
             product: action.payload.product,
             quantity: action.payload.quantity,
-            selectedSize: action.payload.size,
+            selectedColor: action.payload.color,
             variant: action.payload.variant,
           },
         ],
@@ -94,7 +94,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const itemToRemove = state.items.find(
         (item) =>
           item.product.id === action.payload.productId &&
-          item.selectedSize === action.payload.size
+          item.selectedColor === action.payload.color
       );
       if (!itemToRemove) return state;
 
@@ -104,7 +104,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           (item) =>
             !(
               item.product.id === action.payload.productId &&
-              item.selectedSize === action.payload.size
+              item.selectedColor === action.payload.color
             )
         ),
         total: state.total - itemToRemove.variant.price * itemToRemove.quantity,
@@ -114,13 +114,13 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const itemIndex = state.items.findIndex(
         (item) =>
           item.product.id === action.payload.productId &&
-          item.selectedSize === action.payload.size
+          item.selectedColor === action.payload.color
       );
       if (itemIndex === -1) return state;
 
       const item = state.items[itemIndex];
-      const variant = item.product.sizeVariants.find(
-        (v) => v.size === item.selectedSize
+      const variant = item.product.colorVariants.find(
+        (v) => v.color === item.selectedColor
       );
       if (!variant) return state;
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "@/lib/types";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,30 +12,30 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import Carousel from "@/components/Carousel";
-import { ProductWithVariants, SizeVariant } from "@/lib/types";
+import { ProductWithVariants, ColorVariant } from "@/lib/types";
 import { ShoppingCart, Plus, Minus } from "lucide-react";
 
 interface ProductDetailsProps {
   product: ProductWithVariants;
-  initialSize?: string;
+  initialColor?: string;
 }
 
 export default function ProductDetails({
   product,
-  initialSize,
+  initialColor,
 }: ProductDetailsProps) {
-  const [selectedSize, setSelectedSize] = useState<string>(
-    initialSize ||
-      (product.sizeVariants && product.sizeVariants.length > 0
-        ? product.sizeVariants[0].size
+  const [selectedColor, setSelectedColor] = useState<string>(
+    initialColor ||
+      (product.colorVariants && product.colorVariants.length > 0
+        ? product.colorVariants[0].color
         : "")
   );
   const [quantity, setQuantity] = useState(1);
   const { dispatch } = useCart();
 
   const handleAddToCart = () => {
-    const selectedVariant = product.sizeVariants.find(
-      (v) => v.size === selectedSize
+    const selectedVariant = product.colorVariants.find(
+      (v) => v.color === selectedColor
     );
     if (!selectedVariant) return;
 
@@ -44,14 +43,14 @@ export default function ProductDetails({
       type: "ADD_TO_CART",
       payload: {
         product,
-        size: selectedSize,
+        color: selectedColor,
         variant: selectedVariant,
         quantity,
       },
     });
     toast({
       title: "Produs adăugat în coș",
-      description: `${product.name} (${selectedSize}) x${quantity} a fost adăugat în coșul tău.`,
+      description: `${product.name} (${selectedColor}) x${quantity} a fost adăugat în coșul tău.`,
     });
   };
 
@@ -68,8 +67,8 @@ export default function ProductDetails({
       ? product.images
       : ["/placeholder.svg?height=500&width=500"];
 
-  const selectedVariant = product.sizeVariants.find(
-    (v) => v.size === selectedSize
+  const selectedVariant = product.colorVariants.find(
+    (v) => v.color === selectedColor
   );
   const isOutOfStock = selectedVariant
     ? selectedVariant.stock === 0 && !product.allowOutOfStock
@@ -125,18 +124,18 @@ export default function ProductDetails({
             </div>
           )}
 
-          {/* Mărimi disponibile */}
+          {/* Culori disponibile */}
           <div className="mb-4 md:mb-8">
             <h3 className="text-xs md:text-sm font-medium mb-2 md:mb-3">
-              MĂRIME
+              CULOARE
             </h3>
             <div className="flex flex-wrap gap-2">
-              {product.sizeVariants.map((variant) => (
+              {product.colorVariants.map((variant) => (
                 <button
-                  key={variant.size}
-                  onClick={() => setSelectedSize(variant.size)}
+                  key={variant.color}
+                  onClick={() => setSelectedColor(variant.color)}
                   className={`px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base rounded-lg border ${
-                    selectedSize === variant.size
+                    selectedColor === variant.color
                       ? "bg-black text-white border-black"
                       : "bg-white text-black border-gray-200 hover:border-black"
                   } ${
@@ -146,7 +145,7 @@ export default function ProductDetails({
                   }`}
                   disabled={variant.stock === 0 && !product.allowOutOfStock}
                 >
-                  {variant.size}
+                  {variant.color}
                 </button>
               ))}
             </div>

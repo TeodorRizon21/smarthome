@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client'
 
-export interface SizeVariant {
+export interface ColorVariant {
   id: string;
-  size: string;
+  productCode: string;
+  color: string;
   price: number;
   oldPrice: number | null;
   stock: number;
@@ -12,14 +13,13 @@ export interface SizeVariant {
 
 export interface Product {
   id: string;
-  productCode: string;
   name: string;
   description: string;
   images: string[];
-  collections: string[];
+  category: string; // "Video Door Phone", "Home and Building Control System", "SALE"
+  subcategory?: string; // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   price: number;
   oldPrice?: number | null;
-  sizes: string[];
   stock: number;
   lowStockThreshold: number | null;
   allowOutOfStock: boolean;
@@ -28,11 +28,11 @@ export interface Product {
   tags?: string[];
   createdAt: Date;
   updatedAt: Date;
-  sizeVariants: SizeVariant[];
+  colorVariants: ColorVariant[];
 }
 
 export interface ProductWithVariants extends Product {
-  sizeVariants: SizeVariant[];
+  colorVariants: ColorVariant[];
 }
 
 export interface UserDiscount {

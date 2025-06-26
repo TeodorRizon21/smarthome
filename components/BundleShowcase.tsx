@@ -2,173 +2,117 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingBag } from "lucide-react";
-import { useCart } from "@/contexts/cart-context";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
-import { SizeVariant } from "@/lib/types";
-
-interface BundleItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    images: string[];
-  };
-}
-
-interface Bundle {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  oldPrice: number | null;
-  images: string[];
-  discount: number | null;
-  items: BundleItem[];
-  stock: number;
-  allowOutOfStock: boolean;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShoppingCart, Package } from "lucide-react";
+import { Bundle } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 interface BundleShowcaseProps {
   bundles: Bundle[];
 }
 
 export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
-  const { dispatch } = useCart();
-
   if (!bundles || bundles.length === 0) {
     return null;
   }
 
-  const handleAddToCart = (bundle: Bundle, e: React.MouseEvent) => {
-    e.preventDefault();
-
-    console.log("Bundle complet adăugat în coș:", JSON.stringify(bundle));
-
-    // Create a dummy size variant for the bundle
-    const bundleVariant: SizeVariant = {
-      id: `bundle-${bundle.id}-standard`,
-      size: "standard",
-      price: bundle.price,
-      oldPrice: bundle.oldPrice,
-      stock: bundle.stock,
-      lowStockThreshold: 5,
-      productId: `bundle-${bundle.id}`
-    };
-
-    // Add to cart using dispatch
-    dispatch({
-      type: "ADD_TO_CART",
-      payload: {
-        product: {
-          id: `bundle-${bundle.id}`,
-          name: `[Pachet] ${bundle.name}`,
-          description: bundle.description,
-          images: bundle.images,
-          collections: [],
-          price: bundle.price,
-          oldPrice: bundle.oldPrice,
-          sizes: ["standard"],
-          stock: bundle.stock,
-          lowStockThreshold: 5,
-          allowOutOfStock: bundle.allowOutOfStock,
-          showStockLevel: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          sizeVariants: [bundleVariant]
-        },
-        size: "standard",
-        variant: bundleVariant,
-        quantity: 1,
-      },
-    });
-
-    // Show success toast
-    toast({
-      title: "Pachet adăugat în coș",
-      description: `${bundle.name} a fost adăugat în coșul tău.`,
-      action: (
-        <ToastAction altText="Vezi coșul" asChild>
-          <Link
-            href="/cart"
-            className="bg-[#FFD66C] hover:bg-[#ffc936] text-black transition-colors"
-          >
-            Vezi coșul
-          </Link>
-        </ToastAction>
-      ),
-    });
+  const handleAddToCart = (bundle: Bundle) => {
+    // TODO: Implement add to cart functionality for bundles
+    console.log("Add bundle to cart:", bundle);
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {bundles.map((bundle) => (
-        <Card
-          key={bundle.id}
-          className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
-        >
-          <Link href={`/bundles/${bundle.id}`}>
-            <div className="aspect-video relative">
-              <img
-                src={bundle.images[0] || "/placeholder-image.jpg"}
-                alt={bundle.name}
-                className="w-full h-full object-cover"
-              />
-              {bundle.oldPrice && bundle.oldPrice > bundle.price && (
-                <div className="absolute top-0 right-0 bg-red-600 text-white px-2 py-1 m-2 text-xs font-medium">
-                  -
-                  {Math.round(
-                    ((bundle.oldPrice - bundle.price) / bundle.oldPrice) * 100
+      {bundles.map((bundle) => {
+        // Create a dummy color variant for the bundle
+        const bundleVariant = {
+          id: bundle.id,
+          productCode: `BUNDLE-${bundle.id}`,
+          color: bundle.name,
+          price: bundle.price,
+          oldPrice: bundle.oldPrice,
+          stock: bundle.stock,
+          lowStockThreshold: null,
+          productId: bundle.id,
+        };
+
+        const isOnSale = bundle.oldPrice && bundle.oldPrice > bundle.price;
+
+        return (
+          <Card key={bundle.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div className="relative h-48 bg-gray-100">
+              {bundle.images[0] && (
+                <Image
+                  src={bundle.images[0]}
+                  alt={bundle.name}
+                  fill
+                  className="object-cover"
+                />
+              )}
+              {isOnSale && (
+                <Badge className="absolute top-2 right-2 bg-red-500 text-white">
+                  Sale
+                </Badge>
+              )}
+              <Badge className="absolute top-2 left-2 bg-blue-500 text-white">
+                <Package className="w-3 h-3 mr-1" />
+                Bundle
+              </Badge>
+            </div>
+
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">{bundle.name}</CardTitle>
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {bundle.description}
+              </p>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">
+                    {bundle.price.toFixed(2)} lei
+                  </span>
+                  {isOnSale && (
+                    <span className="text-lg text-gray-500 line-through">
+                      {bundle.oldPrice?.toFixed(2)} lei
+                    </span>
                   )}
-                  %
                 </div>
-              )}
-            </div>
-          </Link>
-
-          <CardContent className="p-4">
-            <Link href={`/bundles/${bundle.id}`}>
-              <h3 className="font-semibold text-lg mb-1 hover:text-primary">
-                {bundle.name}
-              </h3>
-            </Link>
-
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-              {bundle.description}
-            </p>
-
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-lg font-bold text-primary">
-                {bundle.price.toFixed(2)} RON
-              </span>
-              {bundle.oldPrice && (
-                <span className="text-sm text-gray-500 line-through">
-                  {bundle.oldPrice.toFixed(2)} RON
+                <span className="text-sm text-gray-500">
+                  {bundle.stock} in stock
                 </span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-500">
-                {bundle.items.length} produse incluse
               </div>
-              <Button
-                size="sm"
-                className="h-8"
-                onClick={(e) => handleAddToCart(bundle, e)}
-                disabled={bundle.stock === 0 && !bundle.allowOutOfStock}
-              >
-                <ShoppingBag className="h-4 w-4 mr-1" />
-                Adaugă în coș
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+
+              <div className="space-y-2 mb-4">
+                <h4 className="font-medium text-sm">Includes:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {bundle.items.map((item) => (
+                    <li key={item.id} className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                      {item.product.name} (x{item.quantity})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleAddToCart(bundle)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Add to Cart
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href={`/bundles/${bundle.id}`}>View Details</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

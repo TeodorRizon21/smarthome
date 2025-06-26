@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-interface SizeVariant {
-  size: string;
+interface ColorVariant {
+  id?: string;
+  productCode: string;
+  color: string;
   price: number;
   oldPrice: number | null;
   stock: number;
@@ -13,7 +15,7 @@ export async function GET(request: Request) {
   try {
     const products = await prisma.product.findMany({
       include: {
-        sizeVariants: true // Include size variants in the response
+        colorVariants: true
       },
       orderBy: { createdAt: 'desc' }
     })
@@ -30,47 +32,54 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { 
       name, 
-      productCode,
       description, 
       images, 
-      collections,
+      category,
+      subcategory,
       allowOutOfStock,
       showStockLevel,
-      sizeVariants,
+      colorVariants,
       pdfUrl
     } = body
 
-    if (!name || !productCode || !description || images.length === 0 || sizeVariants.length === 0) {
+    if (!name || !description || images.length === 0 || colorVariants.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verifică dacă există deja un produs cu acest cod
-    const existingProduct = await prisma.product.findUnique({
-      where: { productCode }
-    })
+    // Check if any color variant has a duplicate product code
+    const productCodes = colorVariants.map((v: ColorVariant) => v.productCode);
+    const existingColorVariants = await prisma.colorVariant.findMany({
+      where: {
+        productCode: {
+          in: productCodes
+        }
+      }
+    });
 
-    if (existingProduct) {
-      return NextResponse.json({ error: 'Product code already exists' }, { status: 400 })
+    if (existingColorVariants.length > 0) {
+      return NextResponse.json({ 
+        error: `Product codes already exist: ${existingColorVariants.map(v => v.productCode).join(', ')}` 
+      }, { status: 400 })
     }
 
     const product = await prisma.product.create({
       data: {
         name,
-        productCode,
         description,
         images,
-        collections,
+        category,
+        subcategory,
         allowOutOfStock,
         showStockLevel,
         pdfUrl,
-        price: sizeVariants[0].price,
-        oldPrice: sizeVariants[0].oldPrice,
-        sizes: sizeVariants.map((v: SizeVariant) => v.size),
-        stock: sizeVariants.reduce((total: number, v: SizeVariant) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...sizeVariants.map((v: SizeVariant) => v.lowStockThreshold || Infinity)),
-        sizeVariants: {
-          create: sizeVariants.map((v: SizeVariant) => ({
-            size: v.size,
+        price: colorVariants[0].price,
+        oldPrice: colorVariants[0].oldPrice,
+        stock: colorVariants.reduce((total: number, v: ColorVariant) => total + v.stock, 0),
+        lowStockThreshold: Math.min(...colorVariants.map((v: ColorVariant) => v.lowStockThreshold || Infinity)),
+        colorVariants: {
+          create: colorVariants.map((v: ColorVariant) => ({
+            productCode: v.productCode,
+            color: v.color,
             price: v.price,
             oldPrice: v.oldPrice,
             stock: v.stock,
@@ -79,7 +88,7 @@ export async function POST(request: Request) {
         }
       },
       include: {
-        sizeVariants: true
+        colorVariants: true
       }
     })
 
@@ -98,15 +107,35 @@ export async function PUT(request: Request) {
       name, 
       description, 
       images, 
-      collections,
+      category,
+      subcategory,
       allowOutOfStock,
       showStockLevel,
-      sizeVariants,
+      colorVariants,
       pdfUrl
     } = body
 
-    if (!id || !name || !description || images.length === 0 || sizeVariants.length === 0) {
+    if (!id || !name || !description || images.length === 0 || colorVariants.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Check if any color variant has a duplicate product code (excluding existing ones for this product)
+    const productCodes = colorVariants.map((v: ColorVariant) => v.productCode);
+    const existingColorVariants = await prisma.colorVariant.findMany({
+      where: {
+        productCode: {
+          in: productCodes
+        },
+        productId: {
+          not: id
+        }
+      }
+    });
+
+    if (existingColorVariants.length > 0) {
+      return NextResponse.json({ 
+        error: `Product codes already exist: ${existingColorVariants.map(v => v.productCode).join(', ')}` 
+      }, { status: 400 })
     }
 
     const product = await prisma.product.update({
@@ -115,19 +144,20 @@ export async function PUT(request: Request) {
         name,
         description,
         images,
-        collections,
+        category,
+        subcategory,
         allowOutOfStock,
         showStockLevel,
         pdfUrl,
-        price: sizeVariants[0].price,
-        oldPrice: sizeVariants[0].oldPrice,
-        sizes: sizeVariants.map((v: SizeVariant) => v.size),
-        stock: sizeVariants.reduce((total: number, v: SizeVariant) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...sizeVariants.map((v: SizeVariant) => v.lowStockThreshold || Infinity)),
-        sizeVariants: {
+        price: colorVariants[0].price,
+        oldPrice: colorVariants[0].oldPrice,
+        stock: colorVariants.reduce((total: number, v: ColorVariant) => total + v.stock, 0),
+        lowStockThreshold: Math.min(...colorVariants.map((v: ColorVariant) => v.lowStockThreshold || Infinity)),
+        colorVariants: {
           deleteMany: {},
-          create: sizeVariants.map((v: SizeVariant) => ({
-            size: v.size,
+          create: colorVariants.map((v: ColorVariant) => ({
+            productCode: v.productCode,
+            color: v.color,
             price: v.price,
             oldPrice: v.oldPrice,
             stock: v.stock,
@@ -136,7 +166,7 @@ export async function PUT(request: Request) {
         }
       },
       include: {
-        sizeVariants: true
+        colorVariants: true
       }
     })
 

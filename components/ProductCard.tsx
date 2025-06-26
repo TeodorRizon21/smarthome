@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { ProductWithVariants, SizeVariant } from "@/lib/types";
+import type { ProductWithVariants, ColorVariant } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
@@ -17,14 +17,14 @@ export default function ProductCard({
 }) {
   const { dispatch } = useCart();
   const getInitialVariant = () => {
-    if (!product.sizeVariants || product.sizeVariants.length === 0) return null;
-    const inStockVariants = product.sizeVariants.filter(
+    if (!product.colorVariants || product.colorVariants.length === 0) return null;
+    const inStockVariants = product.colorVariants.filter(
       (v) => v.stock > 0 || product.allowOutOfStock
     );
-    return inStockVariants[0] || product.sizeVariants[0];
+    return inStockVariants[0] || product.colorVariants[0];
   };
 
-  const [selectedVariant, setSelectedVariant] = useState<SizeVariant | null>(
+  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | null>(
     getInitialVariant()
   );
 
@@ -38,7 +38,7 @@ export default function ProductCard({
     selectedVariant.oldPrice > selectedVariant.price;
 
   const productUrl = `/products/${product.id}${
-    selectedVariant ? `?size=${selectedVariant.size}` : ""
+    selectedVariant ? `?color=${selectedVariant.color}` : ""
   }`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -48,7 +48,7 @@ export default function ProductCard({
         type: "ADD_TO_CART",
         payload: {
           product,
-          size: selectedVariant.size,
+          color: selectedVariant.color,
           variant: selectedVariant,
           quantity: 1,
         },
@@ -56,7 +56,7 @@ export default function ProductCard({
 
       toast({
         title: "Produs adăugat în coș",
-        description: `${product.name} (${selectedVariant.size}) a fost adăugat în coșul tău.`,
+        description: `${product.name} (${selectedVariant.color}) a fost adăugat în coșul tău.`,
         action: (
           <ToastAction altText="Vezi coșul" asChild>
             <Link
@@ -105,9 +105,9 @@ export default function ProductCard({
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="text-lg font-bold mb-2 truncate">{product.name}</h3>
 
-          {/* Size Variants */}
+          {/* Color Variants */}
           <div className="flex flex-wrap gap-1.5 mb-auto">
-            {product.sizeVariants.map((variant) => (
+            {product.colorVariants.map((variant) => (
               <button
                 key={variant.id}
                 onClick={(e) => {
@@ -125,7 +125,7 @@ export default function ProductCard({
                     : ""
                 }`}
               >
-                {variant.size}
+                {variant.color}
               </button>
             ))}
           </div>
