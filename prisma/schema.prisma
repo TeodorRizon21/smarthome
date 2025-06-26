@@ -9,6 +9,7 @@ generator client {
 
 model Product {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  productCode       String        @unique
   name              String
   description       String
   price             Float
@@ -21,7 +22,7 @@ model Product {
   lowStockThreshold Int?
   showStockLevel    Boolean
   pdfUrl            String? // URL-ul către PDF-ul produsului
-  tags              String[]     @default([])
+  tags              String[]      @default([])
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   OrderItem         OrderItem[]
@@ -31,6 +32,7 @@ model Product {
 
 model Order {
   id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber   String              @unique
   userId        String? // Made optional
   total         Float
   paymentStatus String

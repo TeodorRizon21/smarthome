@@ -65,6 +65,7 @@ interface OrderDiscountCode {
 
 interface Order {
   id: string;
+  orderNumber: string;
   userId: string | null;
   createdAt: Date;
   total: number;

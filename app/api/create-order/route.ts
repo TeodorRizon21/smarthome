@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendAdminNotification, sendOrderConfirmation } from '@/lib/email'
+import { generateOrderNumber } from '@/lib/order-number'
 
 interface Product {
   id: string;
@@ -51,94 +52,91 @@ export async function POST(req: Request) {
       return acc
     }, 0)
 
-    const total = Math.max(0, subtotal + shipping - discountAmount)
+    const total = subtotal + shipping - discountAmount
 
-    // Separate regular products and bundles
-    const regularItems = []
-    const bundleItems = []
+    // Separate regular items and bundle items
+    const regularItems = items.filter((item: any) => !item.product.id.startsWith('bundle-'))
+    const bundleItems = items.filter((item: any) => item.product.id.startsWith('bundle-'))
 
-    for (const item of items) {
-      const isBundle = item.product?.id?.toString().startsWith('bundle-')
-      
-      if (isBundle) {
-        bundleItems.push(item)
-      } else {
-        regularItems.push(item)
-      }
-    }
-
-    console.log("Regular items:", regularItems.map(item => ({ id: item.product.id, name: item.product.name })));
-    console.log("Bundle items:", bundleItems.map(item => ({ id: item.product.id, bundleId: item.product.id.replace('bundle-', ''), name: item.product.name })));
-
-    // Verifică dacă toate produsele normale există în baza de date
+    // Validate regular items stock
     if (regularItems.length > 0) {
-      const productIds = regularItems.map(item => item.product.id)
-      console.log("Produse de verificat:", productIds);
-      
-      const existingProducts = await prisma.product.findMany({
+      const productIds = regularItems.map((item: any) => item.product.id)
+      const products = await prisma.product.findMany({
         where: {
-          id: {
-            in: productIds
-          }
-        },
-        select: {
-          id: true
+          id: { in: productIds }
         }
       })
-      
-      console.log("Produse găsite în baza de date:", existingProducts.map((p: Product) => p.id));
 
-      // Verifică dacă avem același număr de produse găsite ca și în comanda
-      if (existingProducts.length !== productIds.length) {
-        const foundIds = existingProducts.map((p: Product) => p.id)
+      if (products.length !== productIds.length) {
+        const foundIds = products.map((p: Product) => p.id)
         const missingIds = productIds.filter(id => !foundIds.includes(id))
         console.log("Produse lipsă:", missingIds);
         return NextResponse.json({ 
           error: `Unul sau mai multe produse nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 })
       }
-    }
 
-    // Verifică dacă toate pachetele există în baza de date
-    if (bundleItems.length > 0) {
-      // Corectează extragerea ID-urilor de bundle
-      const bundleIds = bundleItems.map(item => {
-        const fullId = item.product.id;
-        if (fullId.startsWith('bundle-')) {
-          return fullId.substring(7); // Scoate 'bundle-' din față
-        }
-        return fullId; // În caz că nu are prefix, folosește id-ul așa cum este
-      });
-      
-      console.log("Bundle-uri de verificat (corectate):", bundleIds);
-      
-      // Încearcă să găsești fiecare pachet individual pentru debugging
-      for (const bundleId of bundleIds) {
-        try {
-          const bundle = await prisma.bundle.findUnique({
-            where: { id: bundleId },
-            select: { id: true }
-          });
-          console.log(`Verificare bundle ${bundleId}: ${bundle ? 'găsit' : 'negăsit'}`);
-        } catch (err) {
-          console.error(`Eroare la verificarea bundle-ului ${bundleId}:`, err);
+      // Check stock for each product
+      for (const item of regularItems) {
+        const product = products.find((p: any) => p.id === item.product.id)
+        if (!product) continue // We already handled missing products above
+
+        // Get the size variant if it exists
+        const sizeVariant = await prisma.sizeVariant.findFirst({
+          where: {
+            productId: product.id,
+            size: item.selectedSize
+          }
+        })
+
+        // Check if we should use the size variant stock or the main product stock
+        const currentStock = sizeVariant ? sizeVariant.stock : product.stock
+
+        if (currentStock < item.quantity && !product.allowOutOfStock) {
+          return NextResponse.json({ 
+            error: `Produsul ${product.name} nu mai are stoc suficient. Stoc disponibil: ${currentStock}` 
+          }, { status: 400 })
         }
       }
-      
+
+      // Update stock for products
+      for (const item of regularItems) {
+        const sizeVariant = await prisma.sizeVariant.findFirst({
+          where: {
+            productId: item.product.id,
+            size: item.selectedSize
+          }
+        })
+
+        if (sizeVariant) {
+          // Update size variant stock
+          await prisma.sizeVariant.update({
+            where: { id: sizeVariant.id },
+            data: { stock: { decrement: item.quantity } }
+          })
+        } else {
+          // Update main product stock
+          await prisma.product.update({
+            where: { id: item.product.id },
+            data: { stock: { decrement: item.quantity } }
+          })
+        }
+      }
+    }
+
+    // Validate bundle items stock
+    if (bundleItems.length > 0) {
+      const bundleIds = bundleItems.map((item: any) => {
+        const fullId = item.product.id;
+        return fullId.startsWith('bundle-') ? fullId.substring(7) : fullId;
+      });
+
       const existingBundles = await prisma.bundle.findMany({
         where: {
-          id: {
-            in: bundleIds
-          }
-        },
-        select: {
-          id: true
+          id: { in: bundleIds }
         }
-      })
-      
-      console.log("Bundle-uri găsite în baza de date:", existingBundles.map((b: Bundle) => b.id));
+      });
 
-      // Verifică dacă avem același număr de pachete găsite ca și în comanda
       if (existingBundles.length !== bundleIds.length) {
         const foundIds = existingBundles.map((b: Bundle) => b.id)
         const missingIds = bundleIds.filter(id => !foundIds.includes(id))
@@ -147,11 +145,37 @@ export async function POST(req: Request) {
           error: `Unul sau mai multe pachete nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 })
       }
+
+      // Check and update stock for bundles
+      for (const item of bundleItems) {
+        const bundleId = item.product.id.startsWith('bundle-') 
+          ? item.product.id.substring(7) 
+          : item.product.id;
+        
+        const bundle = existingBundles.find((b: any) => b.id === bundleId);
+        if (!bundle) continue; // We already handled missing bundles above
+
+        if (bundle.stock < item.quantity && !bundle.allowOutOfStock) {
+          return NextResponse.json({ 
+            error: `Pachetul ${bundle.name} nu mai are stoc suficient. Stoc disponibil: ${bundle.stock}` 
+          }, { status: 400 })
+        }
+
+        // Update bundle stock
+        await prisma.bundle.update({
+          where: { id: bundleId },
+          data: { stock: { decrement: item.quantity } }
+        })
+      }
     }
+
+    // Generate order number
+    const orderNumber = await generateOrderNumber()
 
     // Create the order in the database
     const order = await prisma.order.create({
       data: {
+        orderNumber,
         userId: userId || null, // Allow null for guest orders
         total,
         paymentStatus: paymentType === 'card' ? 'COMPLETED' : 'PENDING',
@@ -202,33 +226,22 @@ export async function POST(req: Request) {
             discountCode: true
           }
         }
-      },
+      }
     })
 
-    // Send admin notification
-    await sendAdminNotification(order)
-
-    // Send order confirmation to customer
-    await sendOrderConfirmation(order)
-
-    // Update discount code usage
-    for (const discount of (appliedDiscounts || [])) {
-      await prisma.discountCode.update({
-        where: { code: discount.code },
-        data: {
-          totalUses: { increment: 1 },
-          usesLeft: discount.usesLeft !== null ? { decrement: 1 } : undefined,
-        },
-      })
+    // Send email notifications
+    try {
+      await sendOrderConfirmation(order)
+      await sendAdminNotification(order)
+    } catch (error) {
+      console.error('Error sending email notifications:', error)
+      // Don't return error to client, as order was created successfully
     }
 
-    return NextResponse.json({ orderId: order.id })
-  } catch (error: any) {
+    return NextResponse.json(order)
+  } catch (error) {
     console.error('Error creating order:', error)
-    return NextResponse.json(
-      { error: error.message || 'A apărut o eroare la crearea comenzii' },
-      { status: error.statusCode || 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }
 

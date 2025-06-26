@@ -70,10 +70,67 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 10,
   },
+  invoiceInfo: {
+    marginBottom: 20,
+  },
+  invoiceTitle: {
+    fontSize: 24,
+    marginBottom: 10,
+    textAlign: "center",
+  },
 });
 
+interface OrderItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  size: string;
+  price: number;
+  product: {
+    name: string;
+  };
+}
+
+interface OrderDetails {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  county: string;
+  postalCode: string;
+  country: string;
+  isCompany: boolean;
+  companyName?: string;
+  companyCUI?: string;
+  companyRegNumber?: string;
+  companyAddress?: string;
+  companyCity?: string;
+  companyCounty?: string;
+}
+
+interface BundleOrder {
+  id: string;
+  bundleId: string;
+  quantity: number;
+  price: number;
+  bundle: {
+    name: string;
+  };
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  total: number;
+  createdAt: Date;
+  items: OrderItem[];
+  details: OrderDetails;
+  BundleOrder: BundleOrder[];
+}
+
 interface InvoicePDFProps {
-  order: any;
+  order: Order;
 }
 
 export const InvoicePDF = ({ order }: InvoicePDFProps) => {
@@ -90,8 +147,11 @@ export const InvoicePDF = ({ order }: InvoicePDFProps) => {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Text style={styles.title}>Factura</Text>
-          <Text>Data: {formatDate(order.createdAt)}</Text>
-          <Text>Numar factura: {order.id}</Text>
+          <View style={styles.invoiceInfo}>
+            <Text style={styles.invoiceTitle}>FACTURĂ</Text>
+            <Text>Nr. {order.orderNumber}</Text>
+            <Text>Data: {format(new Date(order.createdAt), "dd/MM/yyyy")}</Text>
+          </View>
         </View>
 
         <View style={styles.section}>

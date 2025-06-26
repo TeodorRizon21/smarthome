@@ -141,6 +141,10 @@ export default async function ViewProductPage({
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-gray-500">Cod Produs</p>
+                <p className="font-medium font-mono">{product.productCode}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-gray-500">Stoc Total</p>
                 <p className="font-medium">{product.stock}</p>
               </div>

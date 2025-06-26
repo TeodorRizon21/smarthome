@@ -61,6 +61,7 @@ type DiscountCode = {
 
 type Order = {
   id: string;
+  orderNumber: string;
   createdAt: string;
   total: number;
   orderStatus: string;
@@ -200,66 +201,18 @@ export default function OrdersContent({ userId }: { userId: string }) {
           <Accordion type="single" collapsible key={order.id}>
             <AccordionItem value={order.id}>
               <AccordionTrigger>
-                <div className="flex flex-col items-start w-full">
-                  <div className="flex justify-between items-center w-full mb-4">
-                    <span className="font-semibold">Order #{order.id}</span>
+                <div className="flex flex-col items-start space-y-2 text-left">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold">
+                      Order {order.orderNumber}
+                    </span>
                     <span className="text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleString()}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Image
-                          src={item.image}
-                          alt={item.productName}
-                          width={40}
-                          height={40}
-                          className="rounded-md"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {item.productName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            ${item.price.toFixed(2)} x {item.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {order.bundleOrders &&
-                      order.bundleOrders.map((bundleOrder) => (
-                        <div
-                          key={bundleOrder.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Image
-                            src={
-                              bundleOrder.bundle.images[0] || "/placeholder.svg"
-                            }
-                            alt={bundleOrder.bundle.name}
-                            width={40}
-                            height={40}
-                            className="rounded-md"
-                          />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {bundleOrder.bundle.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              ${bundleOrder.price.toFixed(2)} x{" "}
-                              {bundleOrder.quantity}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="text-sm text-gray-600">
+                    Total: {order.total.toFixed(2)} RON
                   </div>
-                  <p className="mt-2 font-semibold">
-                    Total: ${order.total.toFixed(2)}
-                  </p>
                 </div>
               </AccordionTrigger>
               <AccordionContent>

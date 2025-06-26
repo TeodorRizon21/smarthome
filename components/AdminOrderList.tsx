@@ -78,6 +78,7 @@ type OrderDetails = {
 
 type Order = {
   id: string;
+  orderNumber: string;
   createdAt: string;
   total: number;
   items: OrderItem[];
@@ -851,77 +852,18 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
         <Accordion type="single" collapsible key={order.id}>
           <AccordionItem value={order.id}>
             <AccordionTrigger>
-              <div className="flex flex-col items-start w-full">
-                <div className="flex justify-between items-center w-full mb-4">
+              <div className="flex flex-col items-start space-y-2 text-left">
+                <div className="flex items-center space-x-2">
                   <span className="font-semibold">
-                    {orderType === "product" ? "Order" : "Bundle Order"} #
-                    {order.id}
+                    Order {order.orderNumber}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleString()}
+                    {new Date(order.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-
-                {orderType === "product" ? (
-                  // Afișare produse pentru comenzile de produse
-                  <div className="flex flex-wrap gap-4">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Image
-                          src={item.image}
-                          alt={item.productName}
-                          width={40}
-                          height={40}
-                          className="rounded-md"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {item.productName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {item.price.toFixed(2)} RON x {item.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  // Afișare bundle-uri pentru comenzile de bundle-uri
-                  <div className="flex flex-wrap gap-4">
-                    {order.bundleOrders.map((bundleOrder) => (
-                      <div
-                        key={bundleOrder.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Image
-                          src={
-                            bundleOrder.bundle.images[0] || "/placeholder.svg"
-                          }
-                          alt={bundleOrder.bundle.name}
-                          width={40}
-                          height={40}
-                          className="rounded-md"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {bundleOrder.bundle.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {bundleOrder.price.toFixed(2)} RON x{" "}
-                            {bundleOrder.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="mt-2 font-semibold">
+                <div className="text-sm text-gray-600">
                   Total: {order.total.toFixed(2)} RON
-                </p>
+                </div>
               </div>
             </AccordionTrigger>
             <AccordionContent>

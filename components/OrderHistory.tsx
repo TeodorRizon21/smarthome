@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 
 type Order = {
   id: string;
+  orderNumber: string;
   createdAt: string;
   total: number;
   items: {
@@ -70,7 +71,9 @@ export default function OrderHistory({ userId }: { userId: string }) {
         {orders.map((order) => (
           <div key={order.id} className="border rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Order #{order.id}</h2>
+              <h2 className="text-xl font-semibold">
+                Order {order.orderNumber}
+              </h2>
               <p className="text-gray-600">
                 {new Date(order.createdAt).toLocaleDateString()}
               </p>

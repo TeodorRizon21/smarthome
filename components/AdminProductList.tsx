@@ -34,6 +34,7 @@ interface SizeVariant {
 interface ProductWithVariants {
   id: string;
   name: string;
+  productCode: string;
   description: string;
   images: string[];
   sizeVariants: SizeVariant[];
@@ -115,6 +116,7 @@ export default function AdminProductList() {
         <TableHeader>
           <TableRow className="bg-gray-50">
             <TableHead className="w-[300px]">Product</TableHead>
+            <TableHead>Code</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Status</TableHead>
@@ -138,6 +140,9 @@ export default function AdminProductList() {
                     </div>
                   </div>
                 </div>
+              </TableCell>
+              <TableCell>
+                <div className="font-mono">{product.productCode}</div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">

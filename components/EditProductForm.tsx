@@ -175,6 +175,20 @@ export default function EditProductForm({ product }: EditProductFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       <div>
+        <Label htmlFor="productCode">Product Code</Label>
+        <Input
+          id="productCode"
+          value={editedProduct.productCode}
+          onChange={(e) =>
+            setEditedProduct((prevState) => ({
+              ...prevState,
+              productCode: e.target.value,
+            }))
+          }
+          required
+        />
+      </div>
+      <div>
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"

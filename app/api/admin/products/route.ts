@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 interface SizeVariant {
   size: string;
   price: number;
-  oldPrice?: number | null;
+  oldPrice: number | null;
   stock: number;
-  lowStockThreshold?: number | null;
+  lowStockThreshold: number | null;
 }
 
 export async function GET(request: Request) {
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { 
       name, 
+      productCode,
       description, 
       images, 
       collections,
@@ -39,13 +40,23 @@ export async function POST(request: Request) {
       pdfUrl
     } = body
 
-    if (!name || !description || images.length === 0 || sizeVariants.length === 0) {
+    if (!name || !productCode || !description || images.length === 0 || sizeVariants.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Verifică dacă există deja un produs cu acest cod
+    const existingProduct = await prisma.product.findUnique({
+      where: { productCode }
+    })
+
+    if (existingProduct) {
+      return NextResponse.json({ error: 'Product code already exists' }, { status: 400 })
     }
 
     const product = await prisma.product.create({
       data: {
         name,
+        productCode,
         description,
         images,
         collections,

@@ -1,118 +1,151 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from '@/hooks/use-toast'
-import ImageUpload from "@/components/ImageUpload"
-import type { Product } from '@/lib/types'
-import { COLLECTIONS } from '@/lib/collections'
-import { Trash2 } from 'lucide-react'
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/hooks/use-toast";
+import ImageUpload from "@/components/ImageUpload";
+import type { Product } from "@/lib/types";
+import { COLLECTIONS } from "@/lib/collections";
+import { Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface SizeVariant {
-  id?: string
-  size: string
-  price: string
-  oldPrice: string
-  stock: string
-  lowStockThreshold: string
+  id?: string;
+  size: string;
+  price: string;
+  oldPrice: string;
+  stock: string;
+  lowStockThreshold: string;
 }
 
 type AdminPanelProps = {
   product?: Product & {
     sizeVariants: Array<{
-      id: string
-      size: string
-      price: number
-      oldPrice: number | null
-      stock: number
-      lowStockThreshold: number | null
-    }>
-  }
-}
+      id: string;
+      size: string;
+      price: number;
+      oldPrice: number | null;
+      stock: number;
+      lowStockThreshold: number | null;
+    }>;
+  };
+};
 
 export default function AdminPanel({ product }: AdminPanelProps) {
-  const [name, setName] = useState(product?.name || '')
-  const [description, setDescription] = useState(product?.description || '')
-  const [images, setImages] = useState<string[]>(product?.images || [])
+  const [name, setName] = useState(product?.name || "");
+  const [productCode, setProductCode] = useState(product?.productCode || "");
+  const [description, setDescription] = useState(product?.description || "");
+  const [images, setImages] = useState<string[]>(product?.images || []);
   const [collections, setCollections] = useState<string[]>(
     product?.collections || [COLLECTIONS.ALL]
-  )
-  const [allowOutOfStock, setAllowOutOfStock] = useState(product?.allowOutOfStock || false)
-  const [showStockLevel, setShowStockLevel] = useState(product?.showStockLevel || false)
+  );
+  const [allowOutOfStock, setAllowOutOfStock] = useState(
+    product?.allowOutOfStock || false
+  );
+  const [showStockLevel, setShowStockLevel] = useState(
+    product?.showStockLevel || false
+  );
   const [sizeVariants, setSizeVariants] = useState<SizeVariant[]>(
-    product?.sizeVariants.map((variant: { id: string; size: string; price: number; oldPrice: number | null; stock: number; lowStockThreshold: number | null }) => ({
-      id: variant.id,
-      size: variant.size,
-      price: variant.price.toString(),
-      oldPrice: variant.oldPrice?.toString() || '',
-      stock: variant.stock.toString(),
-      lowStockThreshold: variant.lowStockThreshold?.toString() || ''
-    })) || []
-  )
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+    product?.sizeVariants.map(
+      (variant: {
+        id: string;
+        size: string;
+        price: number;
+        oldPrice: number | null;
+        stock: number;
+        lowStockThreshold: number | null;
+      }) => ({
+        id: variant.id,
+        size: variant.size,
+        price: variant.price.toString(),
+        oldPrice: variant.oldPrice?.toString() || "",
+        stock: variant.stock.toString(),
+        lowStockThreshold: variant.lowStockThreshold?.toString() || "",
+      })
+    ) || []
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleCollectionToggle = (collection: string) => {
-    if (collection === COLLECTIONS.ALL) return
-    if (collection === COLLECTIONS.SALES) return
+    if (collection === COLLECTIONS.ALL) return;
+    if (collection === COLLECTIONS.SALES) return;
 
-    setCollections(prev => {
+    setCollections((prev) => {
       if (prev.includes(collection)) {
-        return prev.filter(c => c !== collection)
+        return prev.filter((c) => c !== collection);
       } else {
-        return [...prev, collection]
+        return [...prev, collection];
       }
-    })
-  }
+    });
+  };
 
   const addSizeVariant = () => {
-    setSizeVariants([...sizeVariants, {
-      size: '',
-      price: '',
-      oldPrice: '',
-      stock: '0',
-      lowStockThreshold: ''
-    }])
-  }
+    setSizeVariants([
+      ...sizeVariants,
+      {
+        size: "",
+        price: "",
+        oldPrice: "",
+        stock: "0",
+        lowStockThreshold: "",
+      },
+    ]);
+  };
 
   const removeSizeVariant = (index: number) => {
-    setSizeVariants(sizeVariants.filter((_, i) => i !== index))
-  }
+    setSizeVariants(sizeVariants.filter((_, i) => i !== index));
+  };
 
-  const updateSizeVariant = (index: number, field: keyof SizeVariant, value: string) => {
-    const newVariants = [...sizeVariants]
-    newVariants[index] = { ...newVariants[index], [field]: value }
-    setSizeVariants(newVariants)
+  const updateSizeVariant = (
+    index: number,
+    field: keyof SizeVariant,
+    value: string
+  ) => {
+    const newVariants = [...sizeVariants];
+    newVariants[index] = { ...newVariants[index], [field]: value };
+    setSizeVariants(newVariants);
 
     // Update collections if any variant has an old price
-    const hasOldPrice = newVariants.some(variant => 
-      variant.oldPrice && parseFloat(variant.oldPrice) > parseFloat(variant.price)
-    )
+    const hasOldPrice = newVariants.some(
+      (variant) =>
+        variant.oldPrice &&
+        parseFloat(variant.oldPrice) > parseFloat(variant.price)
+    );
     if (hasOldPrice && !collections.includes(COLLECTIONS.SALES)) {
-      setCollections(prev => [...prev, COLLECTIONS.SALES])
+      setCollections((prev) => [...prev, COLLECTIONS.SALES]);
     } else if (!hasOldPrice) {
-      setCollections(prev => prev.filter(c => c !== COLLECTIONS.SALES))
+      setCollections((prev) => prev.filter((c) => c !== COLLECTIONS.SALES));
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!productCode) {
+      toast({
+        title: "Error",
+        description: "Please enter a product code",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     if (images.length === 0) {
       toast({
         title: "Error",
         description: "Please upload at least one image",
         variant: "destructive",
-      })
-      setIsLoading(false)
-      return
+      });
+      setIsLoading(false);
+      return;
     }
 
     if (sizeVariants.length === 0) {
@@ -120,9 +153,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
         title: "Error",
         description: "Please add at least one size variant",
         variant: "destructive",
-      })
-      setIsLoading(false)
-      return
+      });
+      setIsLoading(false);
+      return;
     }
 
     // Validate size variants
@@ -132,70 +165,93 @@ export default function AdminPanel({ product }: AdminPanelProps) {
           title: "Error",
           description: "All size variants must have a size and price",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
 
-      if (variant.oldPrice && parseFloat(variant.oldPrice) <= parseFloat(variant.price)) {
+      if (
+        variant.oldPrice &&
+        parseFloat(variant.oldPrice) <= parseFloat(variant.price)
+      ) {
         toast({
           title: "Error",
           description: "Old price must be greater than current price",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
     }
 
     try {
-      const response = await fetch(product ? `/api/admin/products/${product.id}` : '/api/admin/products', {
-        method: product ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          description,
-          images,
-          collections,
-          allowOutOfStock,
-          showStockLevel,
-          sizeVariants: sizeVariants.map(variant => ({
-            id: variant.id,
-            size: variant.size,
-            price: parseFloat(variant.price),
-            oldPrice: variant.oldPrice ? parseFloat(variant.oldPrice) : null,
-            stock: parseInt(variant.stock),
-            lowStockThreshold: variant.lowStockThreshold ? parseInt(variant.lowStockThreshold) : null,
-          })),
-        }),
-      })
+      const response = await fetch(
+        product ? `/api/admin/products/${product.id}` : "/api/admin/products",
+        {
+          method: product ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            productCode,
+            description,
+            images,
+            collections,
+            allowOutOfStock,
+            showStockLevel,
+            sizeVariants: sizeVariants.map((variant) => ({
+              id: variant.id,
+              size: variant.size,
+              price: parseFloat(variant.price),
+              oldPrice: variant.oldPrice ? parseFloat(variant.oldPrice) : null,
+              stock: parseInt(variant.stock),
+              lowStockThreshold: variant.lowStockThreshold
+                ? parseInt(variant.lowStockThreshold)
+                : null,
+            })),
+          }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create product')
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create product");
       }
 
       toast({
         title: "Success",
-        description: product ? "Product updated successfully" : "Product added successfully",
-      })
-      router.push('/admin/products')
+        description: product
+          ? "Product updated successfully"
+          : "Product added successfully",
+      });
+      router.push("/admin/products");
     } catch (error) {
-      console.error('Error adding/updating product:', error)
+      console.error("Error adding/updating product:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add/update product",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to add/update product",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      <div>
+        <Label htmlFor="productCode">Product Code</Label>
+        <Input
+          id="productCode"
+          value={productCode}
+          onChange={(e) => setProductCode(e.target.value)}
+          required
+        />
+      </div>
       <div>
         <Label htmlFor="name">Name</Label>
         <Input
@@ -225,7 +281,10 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                 id={`collection-${collection}`}
                 checked={collections.includes(collection)}
                 onCheckedChange={() => handleCollectionToggle(collection)}
-                disabled={collection === COLLECTIONS.ALL || collection === COLLECTIONS.SALES}
+                disabled={
+                  collection === COLLECTIONS.ALL ||
+                  collection === COLLECTIONS.SALES
+                }
               />
               <Label htmlFor={`collection-${collection}`}>{collection}</Label>
             </div>
@@ -235,9 +294,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
 
       <div>
         <Label>Product Images (up to 10)</Label>
-        <ImageUpload 
-          value={images} 
-          onChange={(urls) => setImages(urls)} 
+        <ImageUpload
+          value={images}
+          onChange={(urls) => setImages(urls)}
           maxFiles={10}
         />
       </div>
@@ -249,7 +308,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
             Add Size Variant
           </Button>
         </div>
-        
+
         <div className="space-y-4">
           {sizeVariants.map((variant, index) => (
             <Card key={index}>
@@ -259,7 +318,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                     <Label>Size</Label>
                     <Input
                       value={variant.size}
-                      onChange={(e) => updateSizeVariant(index, 'size', e.target.value)}
+                      onChange={(e) =>
+                        updateSizeVariant(index, "size", e.target.value)
+                      }
                       required
                     />
                   </div>
@@ -269,7 +330,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       type="number"
                       step="0.01"
                       value={variant.price}
-                      onChange={(e) => updateSizeVariant(index, 'price', e.target.value)}
+                      onChange={(e) =>
+                        updateSizeVariant(index, "price", e.target.value)
+                      }
                       required
                     />
                   </div>
@@ -279,7 +342,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       type="number"
                       step="0.01"
                       value={variant.oldPrice}
-                      onChange={(e) => updateSizeVariant(index, 'oldPrice', e.target.value)}
+                      onChange={(e) =>
+                        updateSizeVariant(index, "oldPrice", e.target.value)
+                      }
                     />
                   </div>
                   <div>
@@ -287,7 +352,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                     <Input
                       type="number"
                       value={variant.stock}
-                      onChange={(e) => updateSizeVariant(index, 'stock', e.target.value)}
+                      onChange={(e) =>
+                        updateSizeVariant(index, "stock", e.target.value)
+                      }
                       required
                     />
                   </div>
@@ -297,7 +364,13 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       <Input
                         type="number"
                         value={variant.lowStockThreshold}
-                        onChange={(e) => updateSizeVariant(index, 'lowStockThreshold', e.target.value)}
+                        onChange={(e) =>
+                          updateSizeVariant(
+                            index,
+                            "lowStockThreshold",
+                            e.target.value
+                          )
+                        }
                       />
                     </div>
                   )}
@@ -323,7 +396,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
           <Checkbox
             id="allowOutOfStock"
             checked={allowOutOfStock}
-            onCheckedChange={(checked) => setAllowOutOfStock(checked as boolean)}
+            onCheckedChange={(checked) =>
+              setAllowOutOfStock(checked as boolean)
+            }
           />
           <Label htmlFor="allowOutOfStock">Allow sales when out of stock</Label>
         </div>
@@ -339,9 +414,14 @@ export default function AdminPanel({ product }: AdminPanelProps) {
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? (product ? 'Updating...' : 'Adding...') : (product ? 'Update Product' : 'Add Product')}
+        {isLoading
+          ? product
+            ? "Updating..."
+            : "Adding..."
+          : product
+          ? "Update Product"
+          : "Add Product"}
       </Button>
     </form>
-  )
+  );
 }
-

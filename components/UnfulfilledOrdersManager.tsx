@@ -55,6 +55,7 @@ type OrderProduct = {
 
 type Order = {
   id: string;
+  orderNumber: string;
   createdAt: Date;
   customer: {
     name: string;
@@ -373,173 +374,39 @@ export default function UnfulfilledOrdersManager() {
                 Nu există comenzi în așteptare.
               </p>
             ) : (
-              <Accordion type="multiple" className="space-y-4">
+              <div className="flex flex-col space-y-4">
                 {orders.map((order) => (
-                  <AccordionItem
-                    key={order.id}
-                    value={order.id}
-                    className="border rounded-lg overflow-hidden"
-                  >
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full text-left">
-                        <div>
-                          <span className="font-medium">
-                            {order.customer.name}
-                          </span>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString(
-                              "ro-RO"
-                            )}{" "}
-                            - {order.products.length} produse
-                          </p>
-                        </div>
-                        <div className="text-right mt-2 sm:mt-0">
-                          <span className="font-medium">
-                            {order.total.toFixed(2)} RON
-                          </span>
-                          <p className="text-xs">{order.orderStatus}</p>
-                        </div>
+                  <div key={order.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">
+                        Order {order.orderNumber}
+                      </h3>
+                      <span className="text-sm text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full text-left">
+                      <div>
+                        <span className="font-medium">
+                          {order.customer.name}
+                        </span>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString(
+                            "ro-RO"
+                          )}{" "}
+                          - {order.products.length} produse
+                        </p>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-0">
-                      <div className="px-4 pb-4 space-y-4">
-                        {/* Detalii client */}
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">
-                            Detalii client
-                          </h4>
-                          <div className="text-sm space-y-1">
-                            <p>Email: {order.customer.email}</p>
-                            <p>Telefon: {order.customer.phone}</p>
-                            <p>Adresă: {order.customer.address}</p>
-                            {order.details?.isCompany && (
-                              <div className="mt-2">
-                                <h5 className="font-medium">Detalii Factură</h5>
-                                <p>Nume firmă: {order.details.companyName}</p>
-                                <p>CUI: {order.details.companyCUI}</p>
-                                <p>
-                                  Reg. Com.: {order.details.companyRegNumber}
-                                </p>
-                                <p>
-                                  Adresă: {order.details.companyAddress},{" "}
-                                  {order.details.companyCity},{" "}
-                                  {order.details.companyCounty}
-                                </p>
-                              </div>
-                            )}
-                            <Button
-                              onClick={() =>
-                                window.open(
-                                  `/api/orders/${order.id}/invoice`,
-                                  "_blank"
-                                )
-                              }
-                              className="mt-2"
-                              size="sm"
-                            >
-                              Descarcă Factura
-                            </Button>
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Produse comandă */}
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">
-                            Produse comandate
-                          </h4>
-                          <div className="space-y-3">
-                            {order.products.map((product) => (
-                              <div
-                                key={product.id}
-                                className="flex items-center"
-                              >
-                                <Checkbox
-                                  id={`${order.id}_${product.id}`}
-                                  checked={
-                                    checkedProducts[`${order.id}_${product.id}`]
-                                  }
-                                  onCheckedChange={(checked) =>
-                                    handleProductCheck(
-                                      order.id,
-                                      product.id,
-                                      checked === true
-                                    )
-                                  }
-                                  disabled={false} // Dezactivăm complet verificarea disabled
-                                  className="mr-3"
-                                />
-                                <div className="flex flex-1 items-center">
-                                  <div className="relative h-10 w-10 rounded-md overflow-hidden mr-3">
-                                    <Image
-                                      src={product.image}
-                                      alt={product.productName}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-sm">
-                                      {product.productName}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {product.quantity} buc. - Mărime:{" "}
-                                      {product.size}
-                                    </p>
-                                  </div>
-                                  {!product.inStock && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-                                      Stoc insuficient
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="pt-3 border-t">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">
-                              {areAllProductsChecked(order.id)
-                                ? "Toate produsele sunt pregătite!"
-                                : "Bifează toate produsele când sunt pregătite"}
-                            </span>
-                            <Button
-                              onClick={() => openShippingDialog(order)}
-                              disabled={!areAllProductsChecked(order.id)}
-                              size="sm"
-                            >
-                              Adaugă detalii curier
-                            </Button>
-                          </div>
-
-                          {order.orderStatus ===
-                            "Comanda se indreapta catre tine!" && (
-                            <div className="flex justify-between items-center mt-4">
-                              <div className="text-sm">
-                                <p>Curier: {order.courier}</p>
-                                <p>AWB: {order.awb}</p>
-                              </div>
-                              <Button
-                                onClick={() => handleCompleteOrder(order.id)}
-                                disabled={orderBeingProcessed === order.id}
-                                size="sm"
-                                variant="outline"
-                              >
-                                {orderBeingProcessed === order.id
-                                  ? "Se procesează..."
-                                  : "Marchează ca livrată"}
-                              </Button>
-                            </div>
-                          )}
-                        </div>
+                      <div className="text-right mt-2 sm:mt-0">
+                        <span className="font-medium">
+                          {order.total.toFixed(2)} RON
+                        </span>
+                        <p className="text-xs">{order.orderStatus}</p>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                    </div>
+                  </div>
                 ))}
-              </Accordion>
+              </div>
             )}
           </div>
         </CardContent>

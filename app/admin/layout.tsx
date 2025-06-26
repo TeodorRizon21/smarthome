@@ -136,9 +136,9 @@ export default async function AdminLayout({
       <MobileMenuButton />
 
       {/* Main Content */}
-      <main className="lg:ml-64">
+      <main className="lg:ml-64 pt-20">
         {/* Header */}
-        <header className="bg-white shadow-sm">
+        <header className="bg-white shadow-sm fixed top-0 right-0 left-0 lg:left-64 z-10">
           <div className="px-6 py-4">
             <div className="flex items-center justify-end">
               <div className="flex items-center space-x-4">

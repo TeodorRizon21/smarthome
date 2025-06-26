@@ -2,64 +2,90 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { PrismaClient, Prisma } from '@prisma/client'
 
+interface SizeVariant {
+  size: string
+  price: number
+  oldPrice: number | null
+  stock: number
+  lowStockThreshold: number | null
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { productId: string } }
 ) {
   try {
-    const { productId } = params
     const body = await request.json()
-    const { 
-      name, 
-      description, 
-      images, 
+    const {
+      name,
+      productCode,
+      description,
+      price,
+      oldPrice,
+      images,
+      sizes,
       collections,
+      stock,
       allowOutOfStock,
+      lowStockThreshold,
       showStockLevel,
-      sizeVariants,
-      pdfUrl
+      pdfUrl,
+      sizeVariants
     } = body
 
-    // Use a transaction to ensure all operations succeed or fail together
-    const updatedProduct = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // First, delete all existing size variants for this product
-      await tx.sizeVariant.deleteMany({
-        where: { productId }
-      });
+    if (!name || !productCode || !description || images.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
 
-      // Then update the product and create new size variants
-      return await tx.product.update({
-        where: { id: productId },
-        data: {
-          name,
-          description,
-          images,
-          collections,
-          allowOutOfStock,
-          showStockLevel,
-          pdfUrl,
-          price: sizeVariants[0].price,
-          oldPrice: sizeVariants[0].oldPrice,
-          sizes: sizeVariants.map((v: { size: string }) => v.size),
-          stock: sizeVariants.reduce((total: number, v: { stock: number }) => total + v.stock, 0),
-          lowStockThreshold: Math.min(...sizeVariants.map((v: { lowStockThreshold: number | null }) => v.lowStockThreshold || Infinity)),
-          sizeVariants: {
-            create: sizeVariants.map((v: any) => ({
-              size: v.size,
-              price: v.price,
-              oldPrice: v.oldPrice,
-              stock: v.stock,
-              lowStockThreshold: v.lowStockThreshold,
-            }))
-          }
-        },
-        include: {
-          sizeVariants: true
+    // Verifică dacă există deja un produs cu acest cod, excluzând produsul curent
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        productCode,
+        NOT: {
+          id: params.productId
         }
-      });
-    });
+      }
+    })
 
-    return NextResponse.json(updatedProduct)
+    if (existingProduct) {
+      return NextResponse.json({ error: 'Product code already exists' }, { status: 400 })
+    }
+
+    const product = await prisma.product.update({
+      where: {
+        id: params.productId
+      },
+      data: {
+        name,
+        productCode,
+        description,
+        price,
+        oldPrice,
+        images,
+        sizes,
+        collections,
+        stock,
+        allowOutOfStock,
+        lowStockThreshold,
+        showStockLevel,
+        pdfUrl,
+        sizeVariants: {
+          deleteMany: {},
+          create: sizeVariants.map((v: SizeVariant) => ({
+            size: v.size,
+            price: v.price,
+            oldPrice: v.oldPrice,
+            stock: v.stock,
+            lowStockThreshold: v.lowStockThreshold,
+          }))
+        }
+      },
+      include: {
+        sizeVariants: true
+      }
+    })
+
+    return NextResponse.json(product)
   } catch (error) {
     console.error('Error updating product:', error)
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })

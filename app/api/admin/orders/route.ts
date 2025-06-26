@@ -89,18 +89,19 @@ interface ProductMap {
 }
 
 // Type that matches Prisma's return structure
-type PrismaOrder = {
+interface PrismaOrder {
   id: string;
+  orderNumber: string;
   userId: string | null;
   total: number;
   paymentStatus: string;
   orderStatus: string;
   paymentType: string;
+  orderType: string;
   courier: string | null;
   awb: string | null;
   createdAt: Date;
   updatedAt: Date;
-  orderType: string;
   items: Array<{
     id: string;
     orderId: string;
@@ -112,7 +113,7 @@ type PrismaOrder = {
       id: string;
       name: string;
       images: string[];
-    } | null;
+    };
   }>;
   BundleOrder: Array<{
     id: string;
@@ -121,16 +122,13 @@ type PrismaOrder = {
     quantity: number;
     price: number;
     bundle: {
-      name: string;
       id: string;
+      name: string;
       description: string;
       price: number;
       oldPrice: number | null;
       images: string[];
       stock: number;
-      allowOutOfStock: boolean;
-      createdAt: Date;
-      updatedAt: Date;
       discount: number | null;
     };
   }>;
@@ -164,7 +162,7 @@ type PrismaOrder = {
       value: number;
     };
   }>;
-};
+}
 
 export async function GET(request: Request) {
   try {
