@@ -3,9 +3,16 @@
 import { useState, useEffect } from "react"
 import type { ProductWithVariants } from "@/lib/types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SORT_OPTIONS } from "@/lib/collections"
 import ProductCard from "./ProductCard"
 import { useRouter, usePathname } from "next/navigation"
+
+const SORT_OPTIONS = {
+  DEFAULT: "name-asc",
+  NAME_ASC: "name-asc",
+  NAME_DESC: "name-desc",
+  PRICE_ASC: "price-asc",
+  PRICE_DESC: "price-desc"
+} as const;
 
 interface CollectionContentProps {
   collection: string
@@ -22,7 +29,7 @@ export default function CollectionContent({ collection, initialSort = SORT_OPTIO
     async function fetchProducts() {
       try {
         const response = await fetch(
-          `/api/products/collection?collection=${encodeURIComponent(collection)}&sort=${initialSort}`,
+          `/api/products/collection?category=${encodeURIComponent(collection)}&sort=${initialSort}`,
         )
         if (!response.ok) throw new Error("Failed to fetch products")
         const data = await response.json()

@@ -40,9 +40,7 @@ interface Bundle {
   price: number;
   oldPrice: number | null;
   images: string[];
-  stock: number;
   discount: number | null;
-  allowOutOfStock: boolean;
   items: BundleItem[];
 }
 
@@ -140,9 +138,7 @@ export default function AdminBundleList() {
             <TableRow className="bg-gray-50">
               <TableHead className="w-[300px]">Bundle</TableHead>
               <TableHead>Preț</TableHead>
-              <TableHead>Stoc</TableHead>
               <TableHead>Produse Incluse</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="text-right">Acțiuni</TableHead>
             </TableRow>
           </TableHeader>
@@ -182,9 +178,6 @@ export default function AdminBundleList() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span>{bundle.stock}</span>
-                </TableCell>
-                <TableCell>
                   <div className="flex flex-col space-y-1 max-h-24 overflow-y-auto">
                     {bundle.items.map((item) => (
                       <div key={item.id} className="text-sm">
@@ -192,30 +185,6 @@ export default function AdminBundleList() {
                       </div>
                     ))}
                   </div>
-                </TableCell>
-                <TableCell>
-                  {bundle.stock === 0 && !bundle.allowOutOfStock ? (
-                    <Badge
-                      variant="destructive"
-                      className="bg-red-100 text-red-700"
-                    >
-                      Stoc Epuizat
-                    </Badge>
-                  ) : bundle.stock <= 5 ? (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-100 text-yellow-700"
-                    >
-                      Stoc Limitat
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="default"
-                      className="bg-green-100 text-green-700"
-                    >
-                      În Stoc
-                    </Badge>
-                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -238,8 +207,8 @@ export default function AdminBundleList() {
                         </DropdownMenuItem>
                       </Link>
                       <DropdownMenuItem
-                        className="text-red-600"
                         onClick={() => handleDeleteBundle(bundle.id)}
+                        className="text-red-600"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete

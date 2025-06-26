@@ -48,12 +48,23 @@ export default function ProductsPage() {
 
   // Filter and sort products
   const filteredAndSortedProducts = [...products]
-    .filter(product => 
-      selectedCategory === "all" || product.collections.includes(selectedCategory)
-    )
+    .filter(product => {
+      if (selectedCategory === "all") return true;
+      
+      // Check if the selected category matches the product's category
+      if (product.category === selectedCategory) return true;
+      
+      // Check if the selected category matches the product's subcategory
+      if (product.subcategory === selectedCategory) return true;
+      
+      return false;
+    })
     .sort((a, b) => {
-      if (sortBy === "price-asc") return a.sizeVariants[0].price - b.sizeVariants[0].price;
-      if (sortBy === "price-desc") return b.sizeVariants[0].price - a.sizeVariants[0].price;
+      const aPrice = a.colorVariants[0]?.price || 0;
+      const bPrice = b.colorVariants[0]?.price || 0;
+      
+      if (sortBy === "price-asc") return aPrice - bPrice;
+      if (sortBy === "price-desc") return bPrice - aPrice;
       return 0; // featured
     });
 

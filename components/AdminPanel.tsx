@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
 import type { Product } from "@/lib/types";
@@ -27,8 +26,6 @@ interface ColorVariant {
   color: string;
   price: string;
   oldPrice: string;
-  stock: string;
-  lowStockThreshold: string;
 }
 
 type AdminPanelProps = {
@@ -39,8 +36,6 @@ type AdminPanelProps = {
       color: string;
       price: number;
       oldPrice: number | null;
-      stock: number;
-      lowStockThreshold: number | null;
     }>;
   };
 };
@@ -55,12 +50,6 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   const [subcategory, setSubcategory] = useState<string>(
     product?.subcategory || ""
   );
-  const [allowOutOfStock, setAllowOutOfStock] = useState(
-    product?.allowOutOfStock || false
-  );
-  const [showStockLevel, setShowStockLevel] = useState(
-    product?.showStockLevel || false
-  );
   const [colorVariants, setColorVariants] = useState<ColorVariant[]>(
     product?.colorVariants.map(
       (variant: {
@@ -69,16 +58,12 @@ export default function AdminPanel({ product }: AdminPanelProps) {
         color: string;
         price: number;
         oldPrice: number | null;
-        stock: number;
-        lowStockThreshold: number | null;
       }) => ({
         id: variant.id,
         productCode: variant.productCode,
         color: variant.color,
         price: variant.price.toString(),
         oldPrice: variant.oldPrice?.toString() || "",
-        stock: variant.stock.toString(),
-        lowStockThreshold: variant.lowStockThreshold?.toString() || "",
       })
     ) || []
   );
@@ -93,8 +78,6 @@ export default function AdminPanel({ product }: AdminPanelProps) {
         color: "",
         price: "",
         oldPrice: "",
-        stock: "0",
-        lowStockThreshold: "",
       },
     ]);
   };
@@ -198,18 +181,12 @@ export default function AdminPanel({ product }: AdminPanelProps) {
             images,
             category,
             subcategory: category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
-            allowOutOfStock,
-            showStockLevel,
             colorVariants: colorVariants.map((variant) => ({
               id: variant.id,
               productCode: variant.productCode,
               color: variant.color,
               price: parseFloat(variant.price),
               oldPrice: variant.oldPrice ? parseFloat(variant.oldPrice) : null,
-              stock: parseInt(variant.stock),
-              lowStockThreshold: variant.lowStockThreshold
-                ? parseInt(variant.lowStockThreshold)
-                : null,
             })),
           }),
         }
@@ -363,33 +340,6 @@ export default function AdminPanel({ product }: AdminPanelProps) {
                       }
                     />
                   </div>
-                  <div>
-                    <Label>Stock</Label>
-                    <Input
-                      type="number"
-                      value={variant.stock}
-                      onChange={(e) =>
-                        updateColorVariant(index, "stock", e.target.value)
-                      }
-                      required
-                    />
-                  </div>
-                  {showStockLevel && (
-                    <div>
-                      <Label>Low Stock Threshold</Label>
-                      <Input
-                        type="number"
-                        value={variant.lowStockThreshold}
-                        onChange={(e) =>
-                          updateColorVariant(
-                            index,
-                            "lowStockThreshold",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                  )}
                   <div className="col-span-2 flex justify-end">
                     <Button
                       type="button"
@@ -404,28 +354,6 @@ export default function AdminPanel({ product }: AdminPanelProps) {
               </CardContent>
             </Card>
           ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="allowOutOfStock"
-            checked={allowOutOfStock}
-            onCheckedChange={(checked) =>
-              setAllowOutOfStock(checked as boolean)
-            }
-          />
-          <Label htmlFor="allowOutOfStock">Allow sales when out of stock</Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="showStockLevel"
-            checked={showStockLevel}
-            onCheckedChange={(checked) => setShowStockLevel(checked as boolean)}
-          />
-          <Label htmlFor="showStockLevel">Show stock level to customers</Label>
         </div>
       </div>
 

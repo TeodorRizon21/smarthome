@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     // Create the order in the database
     const order = await prisma.order.create({
       data: {
+        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userId,
         total: items.reduce((acc: number, item: { product: { price: number; }; quantity: number; }) => acc + item.product.price * item.quantity, 0),
         paymentStatus: 'PENDING',
@@ -25,10 +26,10 @@ export async function POST(req: Request) {
         paymentType: 'card', 
         details: { connect: { id: detailsId } },
         items: {
-          create: items.map((item: { product: { id: any; price: any; }; quantity: any; selectedSize: any; }) => ({
+          create: items.map((item: { product: { id: any; price: any; }; quantity: any; selectedColor: any; }) => ({
             productId: item.product.id,
             quantity: item.quantity,
-            size: item.selectedSize,
+            color: item.selectedColor,
             price: item.product.price
           }))
         }
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
           currency: 'usd',
           product_data: {
             name: item.product.name,
-            description: `Size: ${item.selectedSize}`,
+            description: `Color: ${item.selectedColor}`,
           },
           unit_amount: Math.round(item.product.price * 100), // Stripe expects amounts in cents
         },

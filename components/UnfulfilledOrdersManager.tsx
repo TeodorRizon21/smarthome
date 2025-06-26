@@ -36,18 +36,18 @@ import {
 type ProductNeed = {
   productId: string;
   productName: string;
-  size: string;
+  color: string;
   quantity: number;
   image: string;
   stock: number;
-  sizeStock: number | null;
+  colorStock: number | null;
 };
 
 type OrderProduct = {
   id: string;
   productId: string;
   productName: string;
-  size: string;
+  color: string;
   quantity: number;
   image: string;
   inStock: boolean;
@@ -319,7 +319,7 @@ export default function UnfulfilledOrdersManager() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {productNeeds.map((product) => (
                   <Card
-                    key={`${product.productId}_${product.size}`}
+                    key={`${product.productId}_${product.color}`}
                     className="overflow-hidden"
                   >
                     <div className="flex items-center p-4">
@@ -336,7 +336,7 @@ export default function UnfulfilledOrdersManager() {
                           {product.productName}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                          Mărime: {product.size}
+                          Color: {product.color}
                         </p>
                         <div className="mt-1 flex items-center">
                           <span className="text-sm font-semibold">
@@ -344,8 +344,8 @@ export default function UnfulfilledOrdersManager() {
                           </span>
                           <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100">
                             Stoc:{" "}
-                            {product.sizeStock !== null
-                              ? product.sizeStock
+                            {product.colorStock !== null
+                              ? product.colorStock
                               : product.stock}
                           </span>
                         </div>

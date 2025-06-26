@@ -6,8 +6,6 @@ export interface ColorVariant {
   color: string;
   price: number;
   oldPrice: number | null;
-  stock: number;
-  lowStockThreshold: number | null;
   productId: string;
 }
 
@@ -17,13 +15,9 @@ export interface Product {
   description: string;
   images: string[];
   category: string; // "Video Door Phone", "Home and Building Control System", "SALE"
-  subcategory?: string; // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
+  subcategory: string | null; // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   price: number;
   oldPrice?: number | null;
-  stock: number;
-  lowStockThreshold: number | null;
-  allowOutOfStock: boolean;
-  showStockLevel: boolean;
   pdfUrl?: string | null;
   tags?: string[];
   createdAt: Date;
@@ -48,7 +42,7 @@ export interface OrderItem {
   orderId: string;
   productId: string;
   quantity: number;
-  size: string;
+  color: string;
   price: number;
   order: Order;
   product: Product;
@@ -136,9 +130,7 @@ export interface Bundle {
   price: number;
   oldPrice: number | null;
   images: string[];
-  stock: number;
   discount: number | null;
-  allowOutOfStock: boolean;
   createdAt: Date;
   updatedAt: Date;
   items: BundleItem[];

@@ -47,22 +47,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           item.selectedColor === action.payload.color
       );
 
-      // Get the variant's stock limit
-      const variant = action.payload.product.colorVariants.find(
-        (v) => v.color === action.payload.color
-      );
-      if (!variant) return state;
-
-      const currentQuantity =
-        existingItemIndex > -1 ? state.items[existingItemIndex].quantity : 0;
-      const allowOutOfStock = action.payload.product.allowOutOfStock;
-      const maxQuantity = allowOutOfStock ? Infinity : variant.stock;
-
-      // Check if adding the specified quantity would exceed the stock limit
-      if (currentQuantity + action.payload.quantity > maxQuantity) {
-        return state;
-      }
-
       if (existingItemIndex > -1) {
         const newItems = [...state.items];
         newItems[existingItemIndex].quantity += action.payload.quantity;
@@ -118,22 +102,23 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       );
       if (itemIndex === -1) return state;
 
-      const item = state.items[itemIndex];
-      const variant = item.product.colorVariants.find(
-        (v) => v.color === item.selectedColor
-      );
-      if (!variant) return state;
-
-      // Check if the new quantity would exceed the stock limit
-      const allowOutOfStock = item.product.allowOutOfStock;
-      const maxQuantity = allowOutOfStock ? Infinity : variant.stock;
-      if (action.payload.quantity > maxQuantity) {
-        return state;
+      // Prevent negative quantities
+      const newQuantity = Math.max(0, action.payload.quantity);
+      
+      // If quantity is 0, remove the item from cart
+      if (newQuantity === 0) {
+        const itemToRemove = state.items[itemIndex];
+        return {
+          ...state,
+          items: state.items.filter((_, index) => index !== itemIndex),
+          total: state.total - itemToRemove.variant.price * itemToRemove.quantity,
+        };
       }
 
-      const quantityDiff = action.payload.quantity - item.quantity;
+      const item = state.items[itemIndex];
+      const quantityDiff = newQuantity - item.quantity;
       const newItems = [...state.items];
-      newItems[itemIndex] = { ...item, quantity: action.payload.quantity };
+      newItems[itemIndex] = { ...item, quantity: newQuantity };
 
       return {
         ...state,

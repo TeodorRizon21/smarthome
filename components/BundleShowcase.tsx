@@ -25,18 +25,6 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {bundles.map((bundle) => {
-        // Create a dummy color variant for the bundle
-        const bundleVariant = {
-          id: bundle.id,
-          productCode: `BUNDLE-${bundle.id}`,
-          color: bundle.name,
-          price: bundle.price,
-          oldPrice: bundle.oldPrice,
-          stock: bundle.stock,
-          lowStockThreshold: null,
-          productId: bundle.id,
-        };
-
         const isOnSale = bundle.oldPrice && bundle.oldPrice > bundle.price;
 
         return (
@@ -80,9 +68,6 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
                     </span>
                   )}
                 </div>
-                <span className="text-sm text-gray-500">
-                  {bundle.stock} in stock
-                </span>
               </div>
 
               <div className="space-y-2 mb-4">

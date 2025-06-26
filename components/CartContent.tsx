@@ -65,41 +65,24 @@ export default function CartContent() {
 
   const updateQuantity = (
     productId: string,
-    size: string,
+    color: string,
     quantity: number
   ) => {
-    if (quantity < 1) return;
-
     const item = state.items.find(
-      (i) => i.product.id === productId && i.selectedSize === size
+      (item) => item.product.id === productId && item.selectedColor === color
     );
     if (!item) return;
 
-    const variant = item.product.sizeVariants.find((v) => v.size === size);
-    if (!variant) return;
-
-    const allowOutOfStock = item.product.allowOutOfStock;
-    const maxQuantity = allowOutOfStock ? Infinity : variant.stock;
-
-    if (quantity > maxQuantity) {
-      toast({
-        title: "Cannot update quantity",
-        description: `Maximum quantity available for this item has been reached`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     dispatch({
       type: "UPDATE_QUANTITY",
-      payload: { productId, size, quantity },
+      payload: { productId, color, quantity },
     });
   };
 
-  const removeItem = (productId: string, size: string) => {
+  const removeItem = (productId: string, color: string) => {
     dispatch({
       type: "REMOVE_FROM_CART",
-      payload: { productId, size },
+      payload: { productId, color },
     });
     toast({
       title: "Item removed",
@@ -246,7 +229,7 @@ export default function CartContent() {
       <div className="space-y-8">
         {state.items.map((item) => (
           <div
-            key={`${item.product.id}-${item.selectedSize}`}
+            key={`${item.product.id}-${item.selectedColor}`}
             className="flex items-center justify-between border-b pb-4"
           >
             <div className="flex items-center space-x-4">
@@ -261,7 +244,7 @@ export default function CartContent() {
               <div>
                 <h3 className="font-semibold">{item.product.name}</h3>
                 <p className="text-sm text-gray-600">
-                  Size: {item.selectedSize}
+                  Color: {item.selectedColor}
                 </p>
                 <p className="text-sm font-medium">
                   ${item.variant.price.toFixed(2)}
@@ -277,8 +260,8 @@ export default function CartContent() {
                   onClick={() =>
                     updateQuantity(
                       item.product.id,
-                      item.selectedSize,
-                      item.quantity - 1
+                      item.selectedColor,
+                      Math.max(0, item.quantity - 1)
                     )
                   }
                 >
@@ -287,15 +270,16 @@ export default function CartContent() {
                 <Input
                   type="number"
                   value={item.quantity}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const newQuantity = parseInt(e.target.value) || 0;
                     updateQuantity(
                       item.product.id,
-                      item.selectedSize,
-                      parseInt(e.target.value)
-                    )
-                  }
+                      item.selectedColor,
+                      Math.max(0, newQuantity)
+                    );
+                  }}
                   className="w-16 text-center"
-                  min="1"
+                  min="0"
                 />
                 <Button
                   variant="outline"
@@ -303,7 +287,7 @@ export default function CartContent() {
                   onClick={() =>
                     updateQuantity(
                       item.product.id,
-                      item.selectedSize,
+                      item.selectedColor,
                       item.quantity + 1
                     )
                   }
@@ -315,7 +299,7 @@ export default function CartContent() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => removeItem(item.product.id, item.selectedSize)}
+                onClick={() => removeItem(item.product.id, item.selectedColor)}
               >
                 Remove
               </Button>

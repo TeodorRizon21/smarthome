@@ -7,8 +7,6 @@ interface ColorVariant {
   color: string;
   price: number;
   oldPrice: number | null;
-  stock: number;
-  lowStockThreshold: number | null;
 }
 
 export async function GET(request: Request) {
@@ -36,8 +34,6 @@ export async function POST(request: Request) {
       images, 
       category,
       subcategory,
-      allowOutOfStock,
-      showStockLevel,
       colorVariants,
       pdfUrl
     } = body
@@ -69,21 +65,15 @@ export async function POST(request: Request) {
         images,
         category,
         subcategory,
-        allowOutOfStock,
-        showStockLevel,
         pdfUrl,
         price: colorVariants[0].price,
         oldPrice: colorVariants[0].oldPrice,
-        stock: colorVariants.reduce((total: number, v: ColorVariant) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...colorVariants.map((v: ColorVariant) => v.lowStockThreshold || Infinity)),
         colorVariants: {
           create: colorVariants.map((v: ColorVariant) => ({
             productCode: v.productCode,
             color: v.color,
             price: v.price,
             oldPrice: v.oldPrice,
-            stock: v.stock,
-            lowStockThreshold: v.lowStockThreshold,
           }))
         }
       },
@@ -109,8 +99,6 @@ export async function PUT(request: Request) {
       images, 
       category,
       subcategory,
-      allowOutOfStock,
-      showStockLevel,
       colorVariants,
       pdfUrl
     } = body
@@ -146,13 +134,9 @@ export async function PUT(request: Request) {
         images,
         category,
         subcategory,
-        allowOutOfStock,
-        showStockLevel,
         pdfUrl,
         price: colorVariants[0].price,
         oldPrice: colorVariants[0].oldPrice,
-        stock: colorVariants.reduce((total: number, v: ColorVariant) => total + v.stock, 0),
-        lowStockThreshold: Math.min(...colorVariants.map((v: ColorVariant) => v.lowStockThreshold || Infinity)),
         colorVariants: {
           deleteMany: {},
           create: colorVariants.map((v: ColorVariant) => ({
@@ -160,8 +144,6 @@ export async function PUT(request: Request) {
             color: v.color,
             price: v.price,
             oldPrice: v.oldPrice,
-            stock: v.stock,
-            lowStockThreshold: v.lowStockThreshold,
           }))
         }
       },

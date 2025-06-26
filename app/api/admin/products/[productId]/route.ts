@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { PrismaClient, Prisma } from '@prisma/client'
 
-interface SizeVariant {
-  size: string
-  price: number
-  oldPrice: number | null
-  stock: number
-  lowStockThreshold: number | null
+interface ColorVariant {
+  id?: string;
+  productCode: string;
+  color: string;
+  price: number;
+  oldPrice: number | null;
 }
 
 export async function PUT(
@@ -18,37 +18,58 @@ export async function PUT(
     const body = await request.json()
     const {
       name,
-      productCode,
       description,
-      price,
-      oldPrice,
       images,
-      sizes,
-      collections,
-      stock,
-      allowOutOfStock,
-      lowStockThreshold,
-      showStockLevel,
+      category,
+      subcategory,
+      colorVariants,
       pdfUrl,
-      sizeVariants
+      tags
     } = body
 
-    if (!name || !productCode || !description || images.length === 0) {
+    if (!name || !description || images.length === 0 || colorVariants.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verifică dacă există deja un produs cu acest cod, excluzând produsul curent
-    const existingProduct = await prisma.product.findFirst({
+    // Validate that all product codes are unique
+    const productCodes = colorVariants.map((v: ColorVariant) => v.productCode);
+    const uniqueProductCodes = new Set(productCodes);
+    if (productCodes.length !== uniqueProductCodes.size) {
+      return NextResponse.json({ error: 'All product codes must be unique' }, { status: 400 })
+    }
+
+    // Check for duplicate product codes in other products
+    const existingProducts = await prisma.product.findMany({
       where: {
-        productCode,
+        colorVariants: {
+          some: {
+            productCode: {
+              in: productCodes
+            }
+          }
+        },
         NOT: {
           id: params.productId
         }
+      },
+      include: {
+        colorVariants: {
+          where: {
+            productCode: {
+              in: productCodes
+            }
+          }
+        }
       }
-    })
+    });
 
-    if (existingProduct) {
-      return NextResponse.json({ error: 'Product code already exists' }, { status: 400 })
+    if (existingProducts.length > 0) {
+      const duplicateCodes = existingProducts.flatMap(p => 
+        p.colorVariants.map(v => v.productCode)
+      );
+      return NextResponse.json({ 
+        error: `Product codes already exist: ${duplicateCodes.join(', ')}` 
+      }, { status: 400 })
     }
 
     const product = await prisma.product.update({
@@ -57,31 +78,24 @@ export async function PUT(
       },
       data: {
         name,
-        productCode,
         description,
-        price,
-        oldPrice,
         images,
-        sizes,
-        collections,
-        stock,
-        allowOutOfStock,
-        lowStockThreshold,
-        showStockLevel,
+        category,
+        subcategory,
         pdfUrl,
-        sizeVariants: {
+        tags: tags || [],
+        colorVariants: {
           deleteMany: {},
-          create: sizeVariants.map((v: SizeVariant) => ({
-            size: v.size,
+          create: colorVariants.map((v: ColorVariant) => ({
+            productCode: v.productCode,
+            color: v.color,
             price: v.price,
             oldPrice: v.oldPrice,
-            stock: v.stock,
-            lowStockThreshold: v.lowStockThreshold,
           }))
         }
       },
       include: {
-        sizeVariants: true
+        colorVariants: true
       }
     })
 
@@ -110,8 +124,8 @@ export async function DELETE(
       }, { status: 400 })
     }
 
-    // Delete associated SizeVariants first
-    await prisma.sizeVariant.deleteMany({
+    // Delete associated ColorVariants first
+    await prisma.colorVariant.deleteMany({
       where: { productId: productId },
     })
 
@@ -120,7 +134,7 @@ export async function DELETE(
       where: { id: productId },
     })
 
-    return NextResponse.json({ success: true, message: 'Product and associated size variants deleted successfully' })
+    return NextResponse.json({ success: true, message: 'Product and associated color variants deleted successfully' })
   } catch (error) {
     console.error('Error deleting product:', error)
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })

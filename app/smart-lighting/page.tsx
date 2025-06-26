@@ -4,7 +4,7 @@ import Newsletter from '@/components/Newsletter';
 import { prisma } from '@/lib/prisma';
 import MoodVideo from '@/components/MoodVideo';
 import SmartLightingProcess from '@/components/SmartLightingProcess';
-import type { Product } from '@/lib/types';
+import type { Product, ColorVariant } from '@/lib/types';
 
 const MOODS = [
   { label: 'Relax', color: 'from-blue-200 to-blue-400', icon: '🛋️', time: 0 },
@@ -55,7 +55,7 @@ function EnergyJourney() {
 
 export default async function SmartLightingPage() {
   const prismaProducts = await prisma.product.findMany({
-    include: { sizeVariants: true },
+    include: { colorVariants: true },
     orderBy: { createdAt: 'desc' },
   });
   
@@ -64,10 +64,9 @@ export default async function SmartLightingPage() {
   const products = prismaProducts.map((p: PrismaProduct) => ({
     ...p,
     pdfUrl: p.pdfUrl ?? null,
-    sizeVariants: p.sizeVariants.map((v: typeof p.sizeVariants[number]) => ({
+    colorVariants: p.colorVariants.map((v: ColorVariant) => ({
       ...v,
-      oldPrice: v.oldPrice ?? null,
-      lowStockThreshold: v.lowStockThreshold ?? null
+      oldPrice: v.oldPrice ?? null
     }))
   }));
 

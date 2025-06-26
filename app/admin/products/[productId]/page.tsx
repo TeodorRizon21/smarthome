@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit2 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
-import { SizeVariant } from "@/lib/types";
 
 export default async function ViewProductPage({
   params,
@@ -21,7 +20,7 @@ export default async function ViewProductPage({
 
   const product = await prisma.product.findUnique({
     where: { id: params.productId },
-    include: { sizeVariants: true },
+    include: { colorVariants: true },
   });
 
   if (!product) {
@@ -102,17 +101,17 @@ export default async function ViewProductPage({
             </div>
 
             <div>
-              <h2 className="text-lg font-medium">Variante</h2>
+              <h2 className="text-lg font-medium">Variante de Culoare</h2>
               <div className="mt-2 space-y-2">
-                {product.sizeVariants.map((variant: SizeVariant) => (
+                {product.colorVariants.map((variant) => (
                   <div
                     key={variant.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <span className="font-medium">{variant.size}</span>
+                      <span className="font-medium">{variant.color}</span>
                       <span className="text-sm text-gray-500 ml-2">
-                        ({variant.stock} în stoc)
+                        ({variant.productCode})
                       </span>
                     </div>
                     <div className="font-medium">
@@ -128,44 +127,17 @@ export default async function ViewProductPage({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {product.collections.map((collection: string, index: number) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
-                >
-                  {collection}
-                </span>
-              ))}
-            </div>
-
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-gray-500">Cod Produs</p>
-                <p className="font-medium font-mono">{product.productCode}</p>
+                <p className="text-gray-500">Categorie</p>
+                <p className="font-medium">{product.category}</p>
               </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-gray-500">Stoc Total</p>
-                <p className="font-medium">{product.stock}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-gray-500">Prag Stoc Scăzut</p>
-                <p className="font-medium">
-                  {product.lowStockThreshold || "Nesetat"}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-gray-500">Afișează Nivelul Stocului</p>
-                <p className="font-medium">
-                  {product.showStockLevel ? "Da" : "Nu"}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-gray-500">Permite Fără Stoc</p>
-                <p className="font-medium">
-                  {product.allowOutOfStock ? "Da" : "Nu"}
-                </p>
-              </div>
+              {product.subcategory && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-500">Subcategorie</p>
+                  <p className="font-medium">{product.subcategory}</p>
+                </div>
+              )}
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-gray-500">PDF Instrucțiuni</p>
                 <p className="font-medium">

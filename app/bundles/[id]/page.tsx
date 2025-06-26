@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { SizeVariant } from "@/lib/types";
+import { ColorVariant } from "@/lib/types";
 
 interface BundlePageProps {
   params: {
@@ -61,15 +61,14 @@ export default function BundlePage({ params }: BundlePageProps) {
     : 0;
 
   const handleAddToCart = () => {
-    // Create a dummy size variant for the bundle
-    const bundleVariant: SizeVariant = {
+    // Create a dummy color variant for the bundle
+    const bundleVariant: ColorVariant = {
       id: `bundle-${bundle.id}-standard`,
-      size: "standard",
+      color: "standard",
       price: bundle.price,
       oldPrice: bundle.oldPrice,
-      stock: bundle.stock,
-      lowStockThreshold: 5,
-      productId: `bundle-${bundle.id}`
+      productId: `bundle-${bundle.id}`,
+      productCode: `BUNDLE-${bundle.id}`
     };
 
     // Add to cart using dispatch
@@ -81,19 +80,15 @@ export default function BundlePage({ params }: BundlePageProps) {
           name: bundle.name,
           description: bundle.description,
           images: bundle.images,
-          collections: [],
+          category: "Bundle",
+          subcategory: null,
           price: bundle.price,
           oldPrice: bundle.oldPrice,
-          sizes: ["standard"],
-          stock: bundle.stock,
-          lowStockThreshold: 5,
-          allowOutOfStock: bundle.allowOutOfStock,
-          showStockLevel: false,
           createdAt: new Date(),
           updatedAt: new Date(),
-          sizeVariants: [bundleVariant]
+          colorVariants: [bundleVariant]
         },
-        size: "standard",
+        color: "standard",
         variant: bundleVariant,
         quantity: 1,
       },

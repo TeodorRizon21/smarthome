@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import ProductCarousel from '@/components/ProductCarousel';
 import Newsletter from '@/components/Newsletter';
 import { prisma } from '@/lib/prisma';
-import type { Product, SizeVariant } from '@/lib/types';
+import { CATEGORIES } from '@/lib/categories';
+import type { Product, ColorVariant } from '@/lib/types';
 
 const businessSolutions = [
   {
@@ -96,44 +97,64 @@ const implementationSteps = [
   }
 ];
 
+// Hotspots for the interactive office image
+const officeHotspots = [
+  {
+    x: 25, y: 35,
+    label: "Control Center",
+    desc: "Centrul de control pentru întreaga clădire. Gestionează toate sistemele smart din birouri.",
+  },
+  {
+    x: 45, y: 25,
+    label: "Smart Lighting",
+    desc: "Iluminat inteligent care se adaptează la prezența angajaților și la lumina naturală.",
+  },
+  {
+    x: 70, y: 30,
+    label: "Access Control",
+    desc: "Sistem de control al accesului cu carduri RFID și recunoaștere facială.",
+  },
+  {
+    x: 55, y: 60,
+    label: "HVAC Smart",
+    desc: "Sistem de climatizare inteligent care optimizează temperatura și calitatea aerului.",
+  },
+  {
+    x: 35, y: 75,
+    label: "Security Cameras",
+    desc: "Camere de securitate cu recunoaștere facială și alertare automată.",
+  },
+  {
+    x: 80, y: 80,
+    label: "Smart Parking",
+    desc: "Sistem de parcare inteligent cu ghidare automată și plățile integrate.",
+  },
+];
+
 export default async function SmartComercialPage() {
-  type PrismaProduct = Awaited<ReturnType<typeof prisma.product.findMany>>[number] & {
-    sizeVariants: SizeVariant[];
-    tags?: string[];
-  };
-  
-  const products = await prisma.product.findMany({
-    include: { sizeVariants: true },
+  const prismaProducts = await prisma.product.findMany({
+    include: { colorVariants: true },
     orderBy: { createdAt: 'desc' },
   });
-
-  const productsWithDefaults = products.map((product: PrismaProduct) => {
-    // Calculate aggregate values from sizeVariants
-    const minVariant = product.sizeVariants.reduce((min: SizeVariant | null, variant: SizeVariant) => 
+  
+  type PrismaProduct = typeof prismaProducts[number];
+  
+  const productsWithDefaults = prismaProducts.map((product: PrismaProduct) => {
+    const minVariant = product.colorVariants.reduce((min: ColorVariant | null, variant: ColorVariant) => 
       (!min || variant.price < min.price) ? variant : min
-    , product.sizeVariants[0]);
-
-    const totalStock = product.sizeVariants.reduce((sum: number, variant: SizeVariant) => 
-      sum + variant.stock
-    , 0);
-
-    const minLowStockThreshold = product.sizeVariants.reduce((min: number | null, variant: SizeVariant) => {
-      const threshold = variant.lowStockThreshold ?? null;
-      if (threshold === null) return min;
-      if (min === null) return threshold;
-      return threshold < min ? threshold : min;
-    }, null);
+    , product.colorVariants[0]);
 
     return {
       ...product,
       pdfUrl: product.pdfUrl ?? null,
       price: minVariant?.price ?? 0,
       oldPrice: minVariant?.oldPrice ?? null,
-      sizes: product.sizeVariants.map((v: SizeVariant) => v.size),
-      stock: totalStock,
-      lowStockThreshold: minLowStockThreshold,
-      tags: product.tags ?? [],
-    } satisfies Product;
+      tags: [],
+      colorVariants: product.colorVariants.map((v: ColorVariant) => ({
+        ...v,
+        oldPrice: v.oldPrice ?? null
+      }))
+    };
   });
 
   return (
@@ -279,7 +300,7 @@ export default async function SmartComercialPage() {
             Produse Smart pentru Afacerea Ta
           </h2>
           <div className="mt-8">
-            <ProductCarousel products={products} />
+            <ProductCarousel products={productsWithDefaults} />
           </div>
         </div>
       </section>

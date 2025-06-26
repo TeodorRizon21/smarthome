@@ -125,7 +125,7 @@ export async function GET(request: Request) {
         productId: item.product.id,
         productName: item.product.name,
         quantity: item.quantity,
-        size: item.size,
+        color: item.size,
         price: item.price,
         image: item.product.images[0] || '/placeholder.svg'
       })),

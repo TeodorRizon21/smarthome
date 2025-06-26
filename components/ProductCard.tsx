@@ -18,19 +18,12 @@ export default function ProductCard({
   const { dispatch } = useCart();
   const getInitialVariant = () => {
     if (!product.colorVariants || product.colorVariants.length === 0) return null;
-    const inStockVariants = product.colorVariants.filter(
-      (v) => v.stock > 0 || product.allowOutOfStock
-    );
-    return inStockVariants[0] || product.colorVariants[0];
+    return product.colorVariants[0];
   };
 
   const [selectedVariant, setSelectedVariant] = useState<ColorVariant | null>(
     getInitialVariant()
   );
-
-  const isOutOfStock =
-    !selectedVariant ||
-    (selectedVariant.stock === 0 && !product.allowOutOfStock);
 
   const isBestSeller = product.tags?.includes("bestseller");
   const isOnSale =
@@ -114,15 +107,10 @@ export default function ProductCard({
                   e.preventDefault();
                   setSelectedVariant(variant);
                 }}
-                disabled={variant.stock === 0 && !product.allowOutOfStock}
                 className={`px-2 py-0.5 text-xs rounded-full border transition-colors duration-200 ${
                   selectedVariant?.id === variant.id
                     ? "bg-black text-white border-black"
                     : "bg-white text-black border-gray-200 hover:border-black"
-                } ${
-                  variant.stock === 0 && !product.allowOutOfStock
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
                 }`}
               >
                 {variant.color}
@@ -148,8 +136,7 @@ export default function ProductCard({
 
             <button
               onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className="bg-[#FFD66C] p-3 rounded-xl hover:bg-[#ffc936] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#FFD66C] p-3 rounded-xl hover:bg-[#ffc936] transition-colors duration-300"
             >
               <ShoppingCart className="w-5 h-5 text-black" />
             </button>

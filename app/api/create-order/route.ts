@@ -69,59 +69,14 @@ export async function POST(req: Request) {
 
       if (products.length !== productIds.length) {
         const foundIds = products.map((p: Product) => p.id)
-        const missingIds = productIds.filter(id => !foundIds.includes(id))
+        const missingIds = productIds.filter((id: string) => !foundIds.includes(id))
         console.log("Produse lipsă:", missingIds);
         return NextResponse.json({ 
           error: `Unul sau mai multe produse nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 })
       }
 
-      // Check stock for each product
-      for (const item of regularItems) {
-        const product = products.find((p: any) => p.id === item.product.id)
-        if (!product) continue // We already handled missing products above
-
-        // Get the size variant if it exists
-        const sizeVariant = await prisma.sizeVariant.findFirst({
-          where: {
-            productId: product.id,
-            size: item.selectedSize
-          }
-        })
-
-        // Check if we should use the size variant stock or the main product stock
-        const currentStock = sizeVariant ? sizeVariant.stock : product.stock
-
-        if (currentStock < item.quantity && !product.allowOutOfStock) {
-          return NextResponse.json({ 
-            error: `Produsul ${product.name} nu mai are stoc suficient. Stoc disponibil: ${currentStock}` 
-          }, { status: 400 })
-        }
-      }
-
-      // Update stock for products
-      for (const item of regularItems) {
-        const sizeVariant = await prisma.sizeVariant.findFirst({
-          where: {
-            productId: item.product.id,
-            size: item.selectedSize
-          }
-        })
-
-        if (sizeVariant) {
-          // Update size variant stock
-          await prisma.sizeVariant.update({
-            where: { id: sizeVariant.id },
-            data: { stock: { decrement: item.quantity } }
-          })
-        } else {
-          // Update main product stock
-          await prisma.product.update({
-            where: { id: item.product.id },
-            data: { stock: { decrement: item.quantity } }
-          })
-        }
-      }
+      // No longer need to check stock since we removed stock tracking
     }
 
     // Validate bundle items stock
@@ -139,34 +94,14 @@ export async function POST(req: Request) {
 
       if (existingBundles.length !== bundleIds.length) {
         const foundIds = existingBundles.map((b: Bundle) => b.id)
-        const missingIds = bundleIds.filter(id => !foundIds.includes(id))
+        const missingIds = bundleIds.filter((id: string) => !foundIds.includes(id))
         console.log("Bundle-uri lipsă:", missingIds);
         return NextResponse.json({ 
           error: `Unul sau mai multe pachete nu mai există în stoc: ${missingIds.join(', ')}` 
         }, { status: 400 })
       }
 
-      // Check and update stock for bundles
-      for (const item of bundleItems) {
-        const bundleId = item.product.id.startsWith('bundle-') 
-          ? item.product.id.substring(7) 
-          : item.product.id;
-        
-        const bundle = existingBundles.find((b: any) => b.id === bundleId);
-        if (!bundle) continue; // We already handled missing bundles above
-
-        if (bundle.stock < item.quantity && !bundle.allowOutOfStock) {
-          return NextResponse.json({ 
-            error: `Pachetul ${bundle.name} nu mai are stoc suficient. Stoc disponibil: ${bundle.stock}` 
-          }, { status: 400 })
-        }
-
-        // Update bundle stock
-        await prisma.bundle.update({
-          where: { id: bundleId },
-          data: { stock: { decrement: item.quantity } }
-        })
-      }
+      // No longer need to check or update bundle stock since we removed stock tracking
     }
 
     // Generate order number
@@ -187,7 +122,7 @@ export async function POST(req: Request) {
           create: regularItems.map((item: any) => ({
             productId: item.product.id,
             quantity: item.quantity,
-            size: item.selectedSize,
+            color: item.selectedColor,
             price: item.variant.price,
           }))
         } : undefined,

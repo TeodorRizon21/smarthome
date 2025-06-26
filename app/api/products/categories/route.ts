@@ -1,25 +1,27 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-interface Product {
-  collections: string[];
-}
+import { CATEGORIES, VDP_SUBCATEGORIES } from '@/lib/categories';
 
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
       select: {
-        collections: true
+        category: true,
+        subcategory: true
       }
     });
     
     const categories = new Set<string>();
     categories.add("all");
     
-    products.forEach((product: Product) => {
-      product.collections.forEach((category: string) => {
-        categories.add(category);
-      });
+    // Add main categories
+    Object.values(CATEGORIES).forEach(category => {
+      categories.add(category);
+    });
+    
+    // Add subcategories for Video Door Phone
+    Object.values(VDP_SUBCATEGORIES).forEach(subcategory => {
+      categories.add(subcategory);
     });
 
     const formattedCategories = Array.from(categories).map(category => ({

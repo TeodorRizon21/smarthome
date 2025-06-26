@@ -70,15 +70,6 @@ export default function ProductDetails({
   const selectedVariant = product.colorVariants.find(
     (v) => v.color === selectedColor
   );
-  const isOutOfStock = selectedVariant
-    ? selectedVariant.stock === 0 && !product.allowOutOfStock
-    : true;
-  const showLowStock =
-    product.showStockLevel &&
-    selectedVariant &&
-    selectedVariant.stock > 0 &&
-    typeof selectedVariant.lowStockThreshold === 'number' &&
-    selectedVariant.stock <= selectedVariant.lowStockThreshold;
 
   return (
     <div className="container mx-auto px-6">
@@ -138,12 +129,7 @@ export default function ProductDetails({
                     selectedColor === variant.color
                       ? "bg-black text-white border-black"
                       : "bg-white text-black border-gray-200 hover:border-black"
-                  } ${
-                    variant.stock === 0 && !product.allowOutOfStock
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
                   }`}
-                  disabled={variant.stock === 0 && !product.allowOutOfStock}
                 >
                   {variant.color}
                 </button>
@@ -186,20 +172,6 @@ export default function ProductDetails({
             )}
           </div>
 
-          {/* Mesaje stoc */}
-          {isOutOfStock && (
-            <p className="text-sm md:text-base text-red-600 font-semibold mb-2 md:mb-4">
-              Stoc epuizat
-            </p>
-          )}
-
-          {showLowStock && selectedVariant && (
-            <p className="text-sm md:text-base text-orange-600 font-semibold mb-2 md:mb-4">
-              Doar {selectedVariant.stock} produse rămase în stoc - comandă
-              acum!
-            </p>
-          )}
-
           {/* Contor și buton adăugare în coș */}
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-gray-100 rounded-2xl">
@@ -228,16 +200,9 @@ export default function ProductDetails({
             <Button
               onClick={handleAddToCart}
               className="flex-1 bg-[#FFD66C] hover:bg-[#ffc936] text-base md:text-lg py-4 md:py-6 text-black flex items-center justify-center gap-2"
-              disabled={isOutOfStock}
             >
-              {isOutOfStock ? (
-                "Stoc epuizat"
-              ) : (
-                <>
-                  <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-                  <span>Cumpără</span>
-                </>
-              )}
+              <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+              <span>Cumpără</span>
             </Button>
           </div>
         </div>

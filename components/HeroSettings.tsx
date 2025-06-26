@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from '@/hooks/use-toast'
 import ImageUpload from "@/components/ImageUpload"
-import { COLLECTIONS } from '@/lib/collections'
+import { CATEGORIES, VDP_SUBCATEGORIES } from '@/lib/categories'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,6 +89,19 @@ export default function HeroSettings({ initialSlides, initialInterval }: HeroSet
     }
   }
 
+  // Create options for all categories and subcategories
+  const categoryOptions = [
+    { value: '/products', label: 'All Products' },
+    ...Object.values(CATEGORIES).map(category => ({
+      value: `/products?category=${encodeURIComponent(category)}`,
+      label: category
+    })),
+    ...Object.values(VDP_SUBCATEGORIES).map(subcategory => ({
+      value: `/products?category=${encodeURIComponent(CATEGORIES.VIDEO_DOOR_PHONE)}&subcategory=${encodeURIComponent(subcategory)}`,
+      label: `${CATEGORIES.VIDEO_DOOR_PHONE} - ${subcategory}`
+    }))
+  ]
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
@@ -126,12 +139,12 @@ export default function HeroSettings({ initialSlides, initialInterval }: HeroSet
             onValueChange={(value) => handleSlideChange(slide.id || index.toString(), 'collectionLink', value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a collection" />
+              <SelectValue placeholder="Select a category" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(COLLECTIONS).map(([key, value]) => (
-                <SelectItem key={key} value={`/collection/${encodeURIComponent(value)}`}>
-                  {value}
+              {categoryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

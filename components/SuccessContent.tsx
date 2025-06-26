@@ -10,9 +10,11 @@ import { AlertTriangle } from "lucide-react";
 export default function SuccessContent({
   orderId,
   paymentType,
+  orderNumber,
 }: {
   orderId: string;
   paymentType: string;
+  orderNumber?: string;
 }) {
   const router = useRouter();
   const { dispatch } = useCart();
@@ -39,7 +41,7 @@ export default function SuccessContent({
     <div className="container mx-auto px-6 py-12 text-center">
       <h1 className="text-3xl font-bold mb-4">Vă mulțumim pentru comandă!</h1>
       <p className="mb-4">
-        Comanda dumneavoastră (ID: {orderId}) a fost înregistrată cu succes.
+        Comanda dumneavoastră (Număr: {orderNumber || orderId}) a fost înregistrată cu succes.
       </p>
       <p className="mb-4">
         Metodă de plată: {paymentType === "card" ? "Card" : "Ramburs la curier"}

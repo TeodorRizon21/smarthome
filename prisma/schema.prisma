@@ -16,10 +16,6 @@ model Product {
   images            String[]
   category          String        // "Video Door Phone", "Home and Building Control System", "SALE"
   subcategory       String?       // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
-  stock             Int
-  allowOutOfStock   Boolean
-  lowStockThreshold Int?
-  showStockLevel    Boolean
   pdfUrl            String? // URL-ul către PDF-ul produsului
   tags              String[]     @default([])
   createdAt         DateTime      @default(now())
@@ -54,7 +50,7 @@ model OrderItem {
   orderId   String  @db.ObjectId
   productId String  @db.ObjectId
   quantity  Int
-  size      String
+  color     String
   price     Float
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
@@ -113,15 +109,13 @@ model HeroSettings {
 }
 
 model ColorVariant {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  productId         String  @db.ObjectId
-  productCode       String  @unique
-  color             String
-  price             Float
-  oldPrice          Float?
-  stock             Int
-  lowStockThreshold Int?
-  product           Product @relation(fields: [productId], references: [id])
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String  @db.ObjectId
+  productCode String  @unique
+  color       String
+  price       Float
+  oldPrice    Float?
+  product     Product @relation(fields: [productId], references: [id])
 }
 
 model AdminNotificationEmail {
@@ -138,9 +132,7 @@ model Bundle {
   price           Float
   oldPrice        Float?
   images          String[]
-  stock           Int
   discount        Float?        @default(0)
-  allowOutOfStock Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   items           BundleItem[]

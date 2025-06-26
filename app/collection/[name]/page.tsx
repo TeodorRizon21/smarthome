@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { COLLECTIONS } from '@/lib/collections'
+import { CATEGORIES, VDP_SUBCATEGORIES } from '@/lib/categories'
 import CollectionContent from '@/components/CollectionContent'
 
-type CollectionValue = typeof COLLECTIONS[keyof typeof COLLECTIONS];
+type CategoryValue = typeof CATEGORIES[keyof typeof CATEGORIES] | typeof VDP_SUBCATEGORIES[keyof typeof VDP_SUBCATEGORIES];
 
 export default function CollectionPage({ 
   params,
@@ -17,11 +17,13 @@ export default function CollectionPage({
     redirect('/smart-residence');
   }
   
-  const isValidCollection = (name: string): name is CollectionValue => {
-    return Object.values(COLLECTIONS).includes(name as CollectionValue);
+  const isValidCategory = (name: string): name is CategoryValue => {
+    return Object.values(CATEGORIES).includes(name as any) || 
+           Object.values(VDP_SUBCATEGORIES).includes(name as any) ||
+           name === 'all';
   };
 
-  if (!isValidCollection(decodedName)) {
+  if (!isValidCategory(decodedName)) {
     redirect('/')
   }
 

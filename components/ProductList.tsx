@@ -9,7 +9,7 @@ async function getProducts(): Promise<ProductWithVariants[]> {
   try {
     return await prisma.product.findMany({
       include: {
-        sizeVariants: true,
+        colorVariants: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -101,79 +101,79 @@ export default async function ProductList() {
         </div>
       </div>
 
-      {/* Collections Section */}
+      {/* Categories Section */}
       <div className="mt-36 mb-12">
         <div className="text-center space-y-2 mb-12 font-poppins relative pb-6">
           <p className="text-sm uppercase tracking-wider text-black font-medium">
-            COLECȚIILE NOASTRE
+            CATEGORIILE NOASTRE
           </p>
           <h2 className="text-3xl md:text-4xl font-bold">
-            Descoperă toate colecțiile
+            Descoperă toate categoriile
           </h2>
           <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Smart Residence Collection Card */}
-          <Link href="/collection/smart-residence" className="group">
+          {/* Video Door Phone Category Card */}
+          <Link href="/products?category=Video%20Door%20Phone" className="group">
             <div className="relative overflow-hidden rounded-lg">
               <Image
                 src="/mencol.webp"
-                alt="Smart Residence Collection"
+                alt="Video Door Phone"
                 width={500}
                 height={500}
                 className="transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <h3 className="text-2xl font-bold text-white">
-                  Smart Residence
+                  Video Door Phone
                 </h3>
               </div>
             </div>
           </Link>
 
-          {/* Smart Comercial Collection Card */}
-          <Link href="/collection/smart-comercial" className="group">
+          {/* Smart Lighting Category Card */}
+          <Link href="/products?category=Smart%20Lighting" className="group">
             <div className="relative overflow-hidden rounded-lg">
               <Image
                 src="/womencol.webp"
-                alt="Smart Comercial Collection"
+                alt="Smart Lighting"
                 width={500}
                 height={500}
                 className="transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <h3 className="text-2xl font-bold text-white">
-                  Smart Comercial
+                  Smart Lighting
                 </h3>
               </div>
             </div>
           </Link>
 
-          {/* Smart Lightning Collection Card */}
-          <Link href="/collection/smart-lightning" className="group">
+          {/* Smart Security Category Card */}
+          <Link href="/products?category=Smart%20Security" className="group">
             <div className="relative overflow-hidden rounded-lg">
               <Image
                 src="/freshcol.webp"
-                alt="Smart Lightning Collection"
+                alt="Smart Security"
                 width={500}
                 height={500}
                 className="transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <h3 className="text-2xl font-bold text-white">
-                  Smart Lightning
+                  Smart Security
                 </h3>
               </div>
             </div>
           </Link>
 
-          {/* Sales Collection Card */}
-          <Link href="/collection/sales" className="group">
+          {/* Sale Category Card */}
+          <Link href="/products?category=Sale" className="group">
             <div className="relative h-[400px] rounded-[30px] overflow-hidden">
               <Image
                 src="/salescol.webp"
-                alt="Sales Collection"
+                alt="Sale"
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
               />
@@ -185,19 +185,19 @@ export default async function ProductList() {
             </div>
           </Link>
 
-          {/* Fresh Collection Card */}
-          <Link href="/collection/fresh" className="group">
+          {/* Smart Home Automation Category Card */}
+          <Link href="/products?category=Smart%20Home%20Automation" className="group">
             <div className="relative h-[400px] rounded-[30px] overflow-hidden">
               <Image
                 src="/unisexcol.webp"
-                alt="Fresh Collection"
+                alt="Smart Home Automation"
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-2xl font-bold">Fresh</h3>
-                <p className="text-sm mt-1">Colecția unisex</p>
+                <h3 className="text-2xl font-bold">Smart Home Automation</h3>
+                <p className="text-sm mt-1">Automatizare completă</p>
               </div>
             </div>
           </Link>
@@ -205,7 +205,7 @@ export default async function ProductList() {
 
         <div className="text-center mt-12">
           <Link
-            href="/collection/all"
+            href="/products"
             className="inline-flex items-center text-lg font-medium hover:text-gray-700 transition-colors"
           >
             Vezi toate produsele

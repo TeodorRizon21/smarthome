@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import ProductCarousel from '@/components/ProductCarousel';
 import { prisma } from '@/lib/prisma';
-import { COLLECTIONS } from '@/lib/collections';
+import { CATEGORIES } from '@/lib/categories';
 import ProductList from '@/components/ProductList';
 import Newsletter from '@/components/Newsletter';
 import type { Product } from '@/lib/types';
@@ -43,7 +43,7 @@ const houseHotspots = [
 
 export default async function SmartResidencePage() {
   const prismaProducts = await prisma.product.findMany({
-    include: { sizeVariants: true },
+    include: { colorVariants: true },
     orderBy: { createdAt: 'desc' },
   });
   
@@ -52,10 +52,9 @@ export default async function SmartResidencePage() {
   const products = prismaProducts.map((p: PrismaProduct) => ({
     ...p,
     pdfUrl: p.pdfUrl ?? null,
-    sizeVariants: p.sizeVariants.map((v: typeof p.sizeVariants[number]) => ({
+    colorVariants: p.colorVariants.map((v: typeof p.colorVariants[number]) => ({
       ...v,
-      oldPrice: v.oldPrice ?? null,
-      lowStockThreshold: v.lowStockThreshold ?? null
+      oldPrice: v.oldPrice ?? null
     }))
   }));
 

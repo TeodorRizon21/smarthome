@@ -12,41 +12,17 @@ async function getProducts(): Promise<ProductWithVariants[]> {
       include: {
         colorVariants: true,
       },
-      take: 8,
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: "desc",
+      },
+      take: 12,
     });
 
-    return products.map((product: { 
-      id: string;
-      name: string;
-      description: string;
-      images: string[];
-      category: string;
-      subcategory: string | null;
-      allowOutOfStock: boolean;
-      showStockLevel: boolean;
-      pdfUrl: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-      colorVariants: ColorVariant[];
-    }) => {
+    return products.map((product) => {
       // Calculate aggregate values from colorVariants
       const minVariant = product.colorVariants.reduce((min: ColorVariant | null, variant: ColorVariant) => 
         (!min || variant.price < min.price) ? variant : min
       , product.colorVariants[0]);
-
-      const totalStock = product.colorVariants.reduce((sum: number, variant: ColorVariant) => 
-        sum + variant.stock
-      , 0);
-
-      const minLowStockThreshold = product.colorVariants.reduce((min: number | null, variant: ColorVariant) => {
-        const threshold = variant.lowStockThreshold ?? null;
-        if (threshold === null) return min;
-        if (min === null) return threshold;
-        return threshold < min ? threshold : min;
-      }, null);
 
       return {
         id: product.id,
@@ -54,14 +30,10 @@ async function getProducts(): Promise<ProductWithVariants[]> {
         description: product.description,
         images: product.images,
         category: product.category,
-        subcategory: product.subcategory || undefined,
+        subcategory: product.subcategory,
         price: minVariant?.price ?? 0,
         oldPrice: minVariant?.oldPrice ?? null,
         sizes: product.colorVariants.map((v: ColorVariant) => v.color),
-        stock: totalStock,
-        lowStockThreshold: minLowStockThreshold,
-        allowOutOfStock: product.allowOutOfStock,
-        showStockLevel: product.showStockLevel,
         pdfUrl: product.pdfUrl,
         tags: [],
         createdAt: product.createdAt,
@@ -112,7 +84,7 @@ const residentialInstallations = [
   {
     title: "Vila Smart Pipera",
     description: "Sistem complet de automatizare pentru o vilă de lux din Pipera, incluzând control lumini, temperatură, securitate și entertainment.",
-    image: "/images/smart-home-1.jpg",
+    image: "/smart-residence.jpg",
     stats: [
       { label: "Economie Energie", value: "35%" },
       { label: "Camere Control", value: "12" },
@@ -123,7 +95,7 @@ const residentialInstallations = [
   {
     title: "Apartament Premium Aviației",
     description: "Soluție inteligentă pentru un apartament modern, cu focus pe eficiență energetică și confort.",
-    image: "/images/smart-home-2.jpg",
+    image: "/img1.jpg",
     stats: [
       { label: "Economie Energie", value: "28%" },
       { label: "Camere Control", value: "6" },
@@ -134,7 +106,7 @@ const residentialInstallations = [
   {
     title: "Casa Inteligentă Corbeanca",
     description: "Sistem integrat de smart home cu accent pe securitate și automatizare completă.",
-    image: "/images/smart-home-3.jpg",
+    image: "/img11.jpg",
     stats: [
       { label: "Economie Energie", value: "40%" },
       { label: "Camere Control", value: "8" },
@@ -148,7 +120,7 @@ const commercialInstallations = [
   {
     title: "Clădire de Birouri Floreasca",
     description: "Sistem complex de automatizare pentru o clădire de birouri cu 6 etaje, incluzând control acces și management energetic.",
-    image: "/images/smart-commercial-1.jpg",
+    image: "/smart-comercial.jpg",
     stats: [
       { label: "Economie Energie", value: "45%" },
       { label: "Suprafață", value: "2500m²" },
@@ -159,7 +131,7 @@ const commercialInstallations = [
   {
     title: "Hotel Boutique Centru",
     description: "Soluție completă de automatizare hotelieră cu control individual pentru 28 de camere.",
-    image: "/images/smart-commercial-2.jpg",
+    image: "/smart-hotel.jpg",
     stats: [
       { label: "Economie Energie", value: "38%" },
       { label: "Camere", value: "28" },
@@ -170,7 +142,7 @@ const commercialInstallations = [
   {
     title: "Restaurant Smart Decebal",
     description: "Sistem integrat de control pentru iluminat, HVAC și ambianță, cu focus pe experiența clientului.",
-    image: "/images/smart-commercial-3.jpg",
+    image: "/office-case.jpg",
     stats: [
       { label: "Economie Energie", value: "32%" },
       { label: "Zone Control", value: "6" },

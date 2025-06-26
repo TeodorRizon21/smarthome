@@ -19,7 +19,7 @@ interface Variant {
 interface CartItem {
   product: Product;
   quantity: number;
-  selectedSize: string;
+  selectedColor: string;
   variant: Variant;
 }
 
@@ -173,7 +173,7 @@ export async function POST(req: Request) {
         regularItems: JSON.stringify(regularItems.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
-          size: item.selectedSize,
+          color: item.selectedColor,
           price: item.variant.price
         }))),
         bundleItems: JSON.stringify(bundleItems.map(item => ({

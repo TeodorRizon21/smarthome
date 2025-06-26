@@ -27,7 +27,7 @@ interface OrderItem {
   orderId: string;
   productId: string;
   quantity: number;
-  size: string;
+  color: string;
   price: number;
   product?: {
     id: string;
@@ -200,7 +200,7 @@ export async function GET(request: Request) {
     });
 
     const filteredOrders = requestedOrderType 
-      ? (orders as PrismaOrder[]).filter(order => {
+      ? orders.filter(order => {
           console.log(`Order ${order.id} has type '${order.orderType}', comparing with '${requestedOrderType}'`);
           
           if (requestedOrderType === 'product') {
@@ -228,7 +228,7 @@ export async function GET(request: Request) {
 
     // Preluăm toate ID-urile de produse pentru a le verifica separat
     const productIds = new Set<string>();
-    filteredOrders.forEach((order: PrismaOrder) => {
+    filteredOrders.forEach((order) => {
       order.items.forEach(item => {
         productIds.add(item.productId);
       });
@@ -254,7 +254,7 @@ export async function GET(request: Request) {
     console.log(`Found ${products.length} products for filtered orders`);
 
     // Formăm răspunsul cu produsele disponibile
-    const formattedOrders = filteredOrders.map((order: PrismaOrder) => ({
+    const formattedOrders = filteredOrders.map((order) => ({
       id: order.id,
       createdAt: order.createdAt.toISOString(),
       total: order.total,
@@ -268,7 +268,7 @@ export async function GET(request: Request) {
           productId: item.productId,
           productName: product ? product.name : 'Produs indisponibil',
           quantity: item.quantity,
-          size: item.size,
+          color: item.size,
           price: item.price,
           image: product && product.images && product.images.length > 0 
             ? product.images[0] 
@@ -302,26 +302,21 @@ export async function GET(request: Request) {
             county: order.details.county,
             postalCode: order.details.postalCode,
             country: order.details.country,
-            notes: order.details.notes
+            notes: order.details.notes,
+            isCompany: order.details.isCompany,
+            companyName: order.details.companyName,
+            companyCUI: order.details.companyCUI,
+            companyRegNumber: order.details.companyRegNumber,
+            companyCounty: order.details.companyCounty,
+            companyCity: order.details.companyCity,
+            companyAddress: order.details.companyAddress
           }
-        : {
-            fullName: 'Detalii indisponibile',
-            email: '',
-            phoneNumber: '',
-            street: '',
-            city: '',
-            county: '',
-            postalCode: '',
-            country: '',
-            notes: ''
-          },
-      paymentType: order.paymentType,
-      courier: order.courier,
-      awb: order.awb,
-      discountCodes: order.discountCodes.map((dc: OrderDiscountCode) => ({
-        code: dc.discountCode?.code || 'unknown',
-        type: dc.discountCode?.type || 'unknown',
-        value: dc.discountCode?.value || 0
+        : null,
+      discountCodes: order.discountCodes.map(discountCode => ({
+        id: discountCode.id,
+        code: discountCode.discountCode.code,
+        type: discountCode.discountCode.type,
+        value: discountCode.discountCode.value
       }))
     }));
 
@@ -339,19 +334,20 @@ export async function POST(request: Request) {
 
     const order = await prisma.order.create({
       data: {
-        userId,
-        total,
-        paymentStatus: paymentType === 'card' ? 'COMPLETED' : 'PENDING',
+        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId: userId || null,
+        total: total,
+        paymentStatus: 'PENDING',
         orderStatus: 'Comanda este in curs de procesare',
-        paymentType,
-        orderType: orderType || 'product',
+        paymentType: paymentType,
+        orderType: orderType,
         details: { connect: { id: details.id } },
         items: items ? {
           create: items.map((item: any) => ({
             productId: item.productId,
             quantity: item.quantity,
-            size: item.size,
-            price: item.price
+            color: item.color,
+            price: item.price,
           }))
         } : undefined,
         BundleOrder: bundleOrders ? {
@@ -362,24 +358,28 @@ export async function POST(request: Request) {
           }))
         } : undefined,
         discountCodes: {
-          create: (discountCodes || []).map((discount: any) => ({
-            discountCode: { connect: { code: discount.code } }
+          create: discountCodes.map((code: any) => ({
+            discountCode: { connect: { id: code.id } }
           }))
         }
       },
       include: {
-        items: true,
-        BundleOrder: {
+        items: {
           include: {
-            bundle: true
-          }
+            product: true,
+          },
         },
         details: true,
         discountCodes: {
           include: {
-            discountCode: true
-          }
-        }
+            discountCode: true,
+          },
+        },
+        BundleOrder: {
+          include: {
+            bundle: true,
+          },
+        },
       },
     })
 

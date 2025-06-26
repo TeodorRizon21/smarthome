@@ -84,7 +84,7 @@ const formSchema = z
 export default function OrderDetailsForm({ userId }: { userId?: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { state } = useCart();
+  const { state, dispatch } = useCart();
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscounts, setAppliedDiscounts] = useState<
     {
@@ -269,7 +269,16 @@ export default function OrderDetailsForm({ userId }: { userId?: string }) {
           throw new Error(responseData.error || "Failed to create order");
         }
 
-        const { orderId } = responseData;
+        const orderId = responseData.id;
+        if (!orderId) {
+          toast({
+            title: "Eroare",
+            description: "Nu s-a putut obține ID-ul comenzii. Vă rugăm să reîncercați.",
+            variant: "destructive",
+          });
+          return;
+        }
+        dispatch({ type: "CLEAR_CART" });
         router.push(`/checkout/success?order_id=${orderId}`);
       } else {
         const checkoutResponse = await fetch("/api/create-checkout-session", {
@@ -696,7 +705,7 @@ export default function OrderDetailsForm({ userId }: { userId?: string }) {
           <div className="space-y-4">
             {state.items.map((item) => (
               <div
-                key={`${item.product.id}-${item.selectedSize}`}
+                key={`${item.product.id}-${item.selectedColor}`}
                 className="flex items-start space-x-4"
               >
                 <div className="relative w-20 h-20 flex-shrink-0">
@@ -713,7 +722,7 @@ export default function OrderDetailsForm({ userId }: { userId?: string }) {
                 <div className="flex-grow">
                   <h3 className="font-medium">{item.product.name}</h3>
                   <p className="text-sm text-gray-600">
-                    Size: {item.selectedSize}
+                    Color: {item.selectedColor}
                   </p>
                   <p className="text-sm font-medium">
                     ${item.variant.price.toFixed(2)} x {item.quantity}

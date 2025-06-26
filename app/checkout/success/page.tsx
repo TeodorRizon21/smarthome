@@ -5,7 +5,6 @@ import SuccessContent from "@/components/SuccessContent";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { sendAdminNotification, sendOrderConfirmation } from "@/lib/email";
 import { PrismaClient } from "@prisma/client";
-import { SizeVariant } from "@/lib/types";
 import { Prisma } from "@prisma/client";
 
 export default async function CheckoutSuccessPage({
@@ -16,8 +15,32 @@ export default async function CheckoutSuccessPage({
   const sessionId = searchParams.session_id;
   const orderId = searchParams.order_id;
 
+  console.log("CheckoutSuccessPage - searchParams:", searchParams);
+  console.log("CheckoutSuccessPage - sessionId:", sessionId);
+  console.log("CheckoutSuccessPage - orderId:", orderId);
+
   if (!sessionId && !orderId) {
-    redirect("/");
+    console.log("No session_id or order_id provided, redirecting to home");
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Eroare: Informații lipsă
+          </h1>
+          <p className="mb-4">
+            Nu s-au găsit informații despre comandă. Vă rugăm să verificați link-ul sau să încercați din nou.
+          </p>
+          <div className="mt-6">
+            <a
+              href="/"
+              className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            >
+              Înapoi la pagina principală
+            </a>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   try {
@@ -38,13 +61,15 @@ export default async function CheckoutSuccessPage({
         throw new Error("Missing order details ID in session metadata");
       }
 
+      console.log(`Searching for existing order with detailsId: ${session.metadata.detailsId}`);
+
       const existingOrder = await prisma.order.findFirst({
         where: {
           paymentType: "card",
           paymentStatus: "COMPLETED",
           detailsId: session.metadata.detailsId,
           createdAt: {
-            gte: new Date(Date.now() - 5 * 60 * 1000), // Ultimele 5 minute
+            gte: new Date(Date.now() - 30 * 60 * 1000), // Ultimele 30 minute
           },
         },
         include: {
@@ -71,213 +96,152 @@ export default async function CheckoutSuccessPage({
         );
         order = existingOrder;
       } else {
-        const {
-          userId,
-          detailsId,
-          orderType,
-          regularItems: regularItemsJson,
-          bundleItems: bundleItemsJson,
-          appliedDiscounts,
-        } = session.metadata as {
-          userId: string;
-          detailsId: string;
-          orderType: string;
-          regularItems: string;
-          bundleItems: string;
-          appliedDiscounts: string;
-        };
-
-        let parsedRegularItems = [];
-        let parsedBundleItems = [];
-
-        if (regularItemsJson) {
-          parsedRegularItems = JSON.parse(regularItemsJson);
-          console.log(
-            `Parsed regular items: ${JSON.stringify(parsedRegularItems)}`
-          );
-        }
-
-        if (bundleItemsJson) {
-          parsedBundleItems = JSON.parse(bundleItemsJson);
-          console.log(
-            `Parsed bundle items: ${JSON.stringify(parsedBundleItems)}`
-          );
-        }
-
-        const parsedDiscounts = JSON.parse(appliedDiscounts || "[]");
-
-        // Use a transaction to create order and update stock
-        try {
-          order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            console.log("Creating order...");
-            // Create the order first
-            const newOrder = await tx.order.create({
-              data: {
-                userId,
-                total: session.amount_total! / 100,
-                paymentStatus: "COMPLETED",
-                orderStatus: "Comanda este in curs de procesare",
-                paymentType: "card",
-                orderType: orderType || "product",
-                details: { connect: { id: detailsId } },
-                items:
-                  parsedRegularItems.length > 0
-                    ? {
-                        create: parsedRegularItems.map((item: any) => ({
-                          productId: item.productId,
-                          quantity: item.quantity,
-                          size: item.size,
-                          price: item.price,
-                        })),
-                      }
-                    : undefined,
-                BundleOrder:
-                  parsedBundleItems.length > 0
-                    ? {
-                        create: parsedBundleItems.map((item: any) => ({
-                          bundleId: item.bundleId,
-                          quantity: item.quantity,
-                          price: item.price,
-                        })),
-                      }
-                    : undefined,
-                discountCodes: {
-                  create: parsedDiscounts.map((discount: any) => ({
-                    discountCode: { connect: { code: discount.code } },
-                  })),
-                },
-              },
+        console.log("No existing order found for session, searching for any recent order with same detailsId...");
+        
+        // Fallback: search for any recent order with the same detailsId
+        const fallbackOrder = await prisma.order.findFirst({
+          where: {
+            detailsId: session.metadata.detailsId,
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 60 * 1000), // Ultimele 30 minute
+            },
+          },
+          include: {
+            items: {
               include: {
-                items: {
-                  include: {
-                    product: true,
-                  },
-                },
-                BundleOrder: {
-                  include: {
-                    bundle: true,
-                  },
-                },
-                details: true,
+                product: true,
               },
+            },
+            BundleOrder: {
+              include: {
+                bundle: true,
+              },
+            },
+            details: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+
+        if (fallbackOrder) {
+          console.log(`Found fallback order: ${fallbackOrder.id}`);
+          order = fallbackOrder;
+        } else {
+          console.log("No existing order found, creating new one...");
+          const {
+            userId,
+            detailsId,
+            orderType,
+            regularItems: regularItemsJson,
+            bundleItems: bundleItemsJson,
+            appliedDiscounts,
+          } = session.metadata as {
+            userId: string;
+            detailsId: string;
+            orderType: string;
+            regularItems: string;
+            bundleItems: string;
+            appliedDiscounts: string;
+          };
+
+          let parsedRegularItems = [];
+          let parsedBundleItems = [];
+
+          if (regularItemsJson) {
+            parsedRegularItems = JSON.parse(regularItemsJson);
+            console.log(
+              `Parsed regular items: ${JSON.stringify(parsedRegularItems)}`
+            );
+          }
+
+          if (bundleItemsJson) {
+            parsedBundleItems = JSON.parse(bundleItemsJson);
+            console.log(
+              `Parsed bundle items: ${JSON.stringify(parsedBundleItems)}`
+            );
+          }
+
+          const parsedDiscounts = JSON.parse(appliedDiscounts || "[]");
+
+          // Use a transaction to create order and update stock
+          try {
+            order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+              console.log("Creating order...");
+              // Create the order first
+              const newOrder = await tx.order.create({
+                data: {
+                  orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  userId,
+                  total: session.amount_total! / 100,
+                  paymentStatus: "COMPLETED",
+                  orderStatus: "Comanda este in curs de procesare",
+                  paymentType: "card",
+                  orderType: orderType || "product",
+                  details: { connect: { id: detailsId } },
+                  items:
+                    parsedRegularItems.length > 0
+                      ? {
+                          create: parsedRegularItems.map((item: any) => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            color: item.color,
+                            price: item.price,
+                          })),
+                        }
+                      : undefined,
+                  BundleOrder:
+                    parsedBundleItems.length > 0
+                      ? {
+                          create: parsedBundleItems.map((item: any) => ({
+                            bundleId: item.bundleId,
+                            quantity: item.quantity,
+                            price: item.price,
+                          })),
+                        }
+                      : undefined,
+                  discountCodes: {
+                    create: parsedDiscounts.map((discount: any) => ({
+                      discountCode: { connect: { code: discount.code } },
+                    })),
+                  },
+                },
+                include: {
+                  items: {
+                    include: {
+                      product: true,
+                    },
+                  },
+                  BundleOrder: {
+                    include: {
+                      bundle: true,
+                    },
+                  },
+                  details: true,
+                },
+              });
+
+              console.log("Order created: ", newOrder.id);
+              return newOrder;
             });
+          } catch (txError) {
+            console.error("Transaction error:", txError);
+            throw txError;
+          }
 
-            console.log("Order created: ", newOrder.id);
-
-            // Update stock for each regular item
-            if (parsedRegularItems.length > 0) {
-              console.log("Updating regular products stock...");
-              for (const item of parsedRegularItems) {
-                try {
-                  const product = await tx.product.findUnique({
-                    where: { id: item.productId },
-                    include: {
-                      sizeVariants: true,
-                    },
-                  });
-
-                  if (product) {
-                    console.log(`Updating stock for product: ${product.id}`);
-                    // Find the size variant
-                    const sizeVariant = product.sizeVariants.find(
-                      (v: SizeVariant) => v.size === item.size
-                    );
-
-                    if (sizeVariant) {
-                      // Update the stock for the size variant
-                      await tx.sizeVariant.updateMany({
-                        where: {
-                          productId: item.productId,
-                          size: item.size,
-                        },
-                        data: {
-                          stock: {
-                            decrement: item.quantity,
-                          },
-                        },
-                      });
-                    } else {
-                      console.log(
-                        `Size variant not found for product ${product.id}, size ${item.size}`
-                      );
-                    }
-                  } else {
-                    console.log(`Product ${item.productId} not found`);
-                  }
-                } catch (itemError) {
-                  console.error(
-                    `Error processing regular item ${item.productId}:`,
-                    itemError
-                  );
-                  // Continue processing other items
-                }
-              }
+          // Send emails only after successful order creation
+          if (order) {
+            try {
+              console.log("Sending notification emails...");
+              await Promise.all([
+                sendAdminNotification(order),
+                sendOrderConfirmation(order),
+              ]);
+            } catch (emailError) {
+              console.error("Error sending emails:", emailError);
+              // Don't throw the error as the order was still created successfully
             }
-
-            // Update stock for each bundle
-            if (parsedBundleItems.length > 0) {
-              console.log("Updating bundle products stock...");
-              for (const bundleItem of parsedBundleItems) {
-                try {
-                  // Get the bundle with its items
-                  const bundle = await tx.bundle.findUnique({
-                    where: { id: bundleItem.bundleId },
-                    include: {
-                      items: {
-                        include: {
-                          product: {
-                            include: {
-                              sizeVariants: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  });
-
-                  if (bundle) {
-                    console.log(`Processing bundle: ${bundle.id}`);
-
-                    // Update bundle stock
-                    await tx.bundle.update({
-                      where: { id: bundle.id },
-                      data: {
-                        stock: {
-                          decrement: bundleItem.quantity,
-                        },
-                      },
-                    });
-                  } else {
-                    console.log(`Bundle ${bundleItem.bundleId} not found`);
-                  }
-                } catch (bundleError) {
-                  console.error(
-                    `Error processing bundle ${bundleItem.bundleId}:`,
-                    bundleError
-                  );
-                  // Continue processing other bundles
-                }
-              }
-            }
-
-            // Nu mai actualizăm statusul comenzii, păstrăm originalul "Comanda este in curs de procesare"
-            return newOrder;
-          });
-        } catch (txError) {
-          console.error("Transaction error:", txError);
-          throw txError;
-        }
-
-        // Send emails only after successful order creation
-        try {
-          console.log("Sending notification emails...");
-          await Promise.all([
-            sendAdminNotification(order),
-            sendOrderConfirmation(order),
-          ]);
-        } catch (emailError) {
-          console.error("Error sending emails:", emailError);
-          // Don't throw the error as the order was still created successfully
+          }
         }
       }
     } else if (orderId) {
@@ -302,100 +266,46 @@ export default async function CheckoutSuccessPage({
         }
 
         console.log("Found existing order:", existingOrder.id);
+        order = existingOrder;
 
-        // Verifică dacă stocul a fost deja actualizat
-        // În loc să verificăm statusul comenzii, folosim un identificator intern mai precis
-        // De exemplu, putem verifica dacă comanda are un anumit câmp populat (courier, awb)
-        // sau putem verifica cât timp a trecut de la crearea comenzii
-        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-        if (existingOrder.createdAt < thirtyMinutesAgo) {
-          console.log("Order already processed, skipping stock updates");
-          order = existingOrder;
-        } else {
-          order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            console.log("Updating stock...");
-            for (const item of existingOrder.items) {
-              try {
-                // Verifică dacă este un produs normal, nu un pachet
-                const product = await tx.product.findUnique({
-                  where: { id: item.productId },
-                  include: {
-                    sizeVariants: true,
-                  },
-                });
-
-                if (product) {
-                  console.log(`Updating stock for product: ${product.id}`);
-                  // Verifică dacă există varianta de mărime
-                  const sizeVariant = product.sizeVariants.find(
-                    (v: SizeVariant) => v.size === item.size
-                  );
-
-                  if (sizeVariant) {
-                    // Actualizează stocul doar pentru produse normale
-                    await tx.sizeVariant.updateMany({
-                      where: {
-                        productId: item.productId,
-                        size: item.size,
-                      },
-                      data: {
-                        stock: {
-                          decrement: item.quantity,
-                        },
-                      },
-                    });
-                  } else {
-                    console.log(
-                      `Size variant not found for product ${product.id}, size ${item.size}`
-                    );
-                  }
-                } else {
-                  console.log(
-                    `Product ${item.productId} not found - might be a bundle`
-                  );
-                }
-              } catch (itemError) {
-                console.error(
-                  `Error processing item ${item.productId}:`,
-                  itemError
-                );
-                // Nu aruncăm eroarea pentru a permite continuarea procesării
-              }
-            }
-
-            // Nu actualizăm statusul comenzii, păstrăm statusul original
-            // Marcăm intern doar că am procesat această comandă
-            const orderAge =
-              new Date().getTime() -
-              new Date(existingOrder.createdAt).getTime();
-            console.log(`Comanda are vârsta de ${orderAge / 1000 / 60} minute`);
-
-            return existingOrder;
-          });
-
-          // Trimite e-mailurile doar dacă comanda tocmai a fost procesată
-          try {
-            console.log("Sending notification emails...");
-            await Promise.all([
-              sendAdminNotification(order),
-              sendOrderConfirmation(order),
-            ]);
-          } catch (emailError) {
-            console.error("Error sending emails:", emailError);
-            // Don't throw the error as the order was still created successfully
-          }
+        // Trimite e-mailurile doar dacă comanda tocmai a fost procesată
+        try {
+          console.log("Sending notification emails...");
+          await Promise.all([
+            sendAdminNotification(order),
+            sendOrderConfirmation(order),
+          ]);
+        } catch (emailError) {
+          console.error("Error sending emails:", emailError);
+          // Don't throw the error as the order was still created successfully
         }
       } catch (txError) {
         console.error("Transaction error:", txError);
         throw txError;
       }
+    } else {
+      console.log("No session_id or order_id provided");
+      throw new Error("No order information provided");
     }
 
     if (!order) {
+      console.error("No order found or created");
       throw new Error("Failed to create or find order");
     }
 
-    const userId = order.details.userId;
+    console.log(`Final order ID: ${order.id}`);
+
+    // Get order details from the included relation
+    const orderWithDetails = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { details: true }
+    });
+
+    if (!orderWithDetails?.details) {
+      throw new Error("Order details not found");
+    }
+
+    const userId = orderWithDetails.details.userId;
     if (!userId) {
       return (
         <div className="container mx-auto px-4 py-8">
@@ -405,7 +315,7 @@ export default async function CheckoutSuccessPage({
             </h1>
             <p className="mb-4">
               Vă mulțumim pentru comandă! Am trimis un email de confirmare la
-              adresa {order.details.email}.
+              adresa {orderWithDetails.details.email}.
             </p>
             <p className="mb-4">
               Pentru a urmări comanda, vă rugăm să verificați email-ul pentru
@@ -425,7 +335,7 @@ export default async function CheckoutSuccessPage({
     }
 
     return (
-      <SuccessContent orderId={order.id} paymentType={order.paymentType} />
+      <SuccessContent orderId={order.id} paymentType={order.paymentType} orderNumber={order.orderNumber} />
     );
   } catch (error: any) {
     console.error("Error processing order:", error);

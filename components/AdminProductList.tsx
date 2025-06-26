@@ -28,8 +28,6 @@ interface ColorVariant {
   color: string;
   price: number;
   oldPrice: number | null;
-  stock: number;
-  lowStockThreshold: number | null;
 }
 
 interface ProductWithVariants {
@@ -40,8 +38,6 @@ interface ProductWithVariants {
   category: string;
   subcategory?: string;
   colorVariants: ColorVariant[];
-  allowOutOfStock: boolean;
-  showStockLevel: boolean;
 }
 
 export default function AdminProductList() {
@@ -120,8 +116,6 @@ export default function AdminProductList() {
             <TableHead className="w-[300px]">Product</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Variants</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -162,45 +156,6 @@ export default function AdminProductList() {
                   ))}
                 </div>
               </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {product.colorVariants?.map((variant) => (
-                    <div key={variant.id} className="text-sm">
-                      {variant.color}: {variant.stock}
-                    </div>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {product.colorVariants?.map((variant) => (
-                    <div key={variant.id}>
-                      {variant.stock === 0 && !product.allowOutOfStock ? (
-                        <Badge
-                          variant="destructive"
-                          className="bg-red-100 text-red-700"
-                        >
-                          Out of Stock
-                        </Badge>
-                      ) : variant.stock <= (variant.lowStockThreshold || 5) ? (
-                        <Badge
-                          variant="secondary"
-                          className="bg-yellow-100 text-yellow-700"
-                        >
-                          Low Stock
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="default"
-                          className="bg-green-100 text-green-700"
-                        >
-                          In Stock
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -222,8 +177,8 @@ export default function AdminProductList() {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem
-                      className="text-red-600"
                       onClick={() => handleDeleteProduct(product.id)}
+                      className="text-red-600"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete

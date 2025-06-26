@@ -11,7 +11,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = {
   name: 'Smart Homes',
-  email: 'no-reply@smarthomes.ro'
+  email: 'no-reply@smarthomemall.ro'
 };
 
 export async function sendEmail(to: string, subject: string, html: string, attachments?: any[]) {
@@ -91,7 +91,7 @@ export async function sendAdminNotification(order: any) {
         (isBundle ? `Pachet: ${item.productId.replace('bundle-', '')}` : 
         `Produs: ${item.productId}`);
                         
-      return `<li>${item.quantity}x ${productName} (${item.size}) - ${item.price.toFixed(2)} RON</li>`;
+      return `<li>${item.quantity}x ${productName} (${item.color}) - ${item.price.toFixed(2)} RON</li>`;
     }).join('');
 
     const html = `
@@ -168,7 +168,7 @@ export async function sendOrderConfirmation(order: any) {
         (isBundle ? `Pachet: ${item.productId.replace('bundle-', '')}` : 
         `Produs: ${item.productId}`);
                         
-      return `<li>${item.quantity}x ${productName} (${item.size}) - ${item.price.toFixed(2)} RON</li>`;
+      return `<li>${item.quantity}x ${productName} (${item.color}) - ${item.price.toFixed(2)} RON</li>`;
     }).join('');
 
     const html = `
