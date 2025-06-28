@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request, { params, searchParams }: { params: {}; searchParams: { [key: string]: string | string[] | undefined } }) {
+export async function GET(request: Request) {
   try {
-    const timeRange = searchParams.timeRange?.toString() || '24h'
-    const county = searchParams.county?.toString()
-    const category = searchParams.category?.toString()
-    const showCompletedOnly = searchParams.showCompletedOnly === 'true'
+    // Verificăm dacă utilizatorul este admin
+    const adminStatus = await isAdmin();
+    if (!adminStatus) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Extragem parametrii din URL
+    const url = new URL(request.url);
+    const timeRange = url.searchParams.get('timeRange') || '24h';
+    const county = url.searchParams.get('county');
+    const category = url.searchParams.get('category');
+    const showCompletedOnly = url.searchParams.get('showCompletedOnly') === 'true';
 
     let startDate = new Date()
     let interval: 'hour' | 'day' | 'week' | 'month' = 'hour'
@@ -210,9 +222,34 @@ export async function GET(request: Request, { params, searchParams }: { params: 
       totalRevenue: data.totalRevenue
     })).sort((a, b) => b.totalSales - a.totalSales)
 
-    // Calculăm statistici pentru clienți
-    const customerMap = new Map<string, { 
+    // Calculăm statistici pentru județe
+    const countyMap = new Map<string, { 
       orderCount: number, 
+      totalRevenue: number 
+    }>()
+    
+    orders.forEach((order) => {
+      if (order.details?.county) {
+        const existing = countyMap.get(order.details.county) || {
+          orderCount: 0,
+          totalRevenue: 0
+        }
+        existing.orderCount += 1
+        existing.totalRevenue += order.total
+        countyMap.set(order.details.county, existing)
+      }
+    })
+
+    const counties = Array.from(countyMap.entries()).map(([name, data]) => ({
+      name,
+      orderCount: data.orderCount,
+      totalRevenue: data.totalRevenue
+    })).sort((a, b) => b.orderCount - a.orderCount)
+
+    // Calculăm statistici pentru clienți recurenți
+    const customerMap = new Map<string, { 
+      email: string,
+      orderCount: number,
       totalSpent: number,
       orders: Array<{
         id: string;
@@ -223,8 +260,9 @@ export async function GET(request: Request, { params, searchParams }: { params: 
     }>()
     
     orders.forEach((order) => {
-      if (order.userId) {
-        const existing = customerMap.get(order.userId) || {
+      if (order.details?.email) {
+        const existing = customerMap.get(order.details.email) || {
+          email: order.details.email,
           orderCount: 0,
           totalSpent: 0,
           orders: []
@@ -237,39 +275,52 @@ export async function GET(request: Request, { params, searchParams }: { params: 
           total: order.total,
           status: order.orderStatus
         })
-        customerMap.set(order.userId, existing)
+        customerMap.set(order.details.email, existing)
       }
     })
 
-    const customers = Array.from(customerMap.entries()).map(([id, data]) => ({
-      id,
-      orderCount: data.orderCount,
-      totalSpent: data.totalSpent,
-      orders: data.orders
-    })).sort((a, b) => b.totalSpent - a.totalSpent)
+    // Filtrăm doar clienții cu mai mult de o comandă
+    const repeatCustomers = Array.from(customerMap.values())
+      .filter(customer => customer.orderCount > 1)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
 
     // Calculăm statistici generale
-    const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0)
-    const totalOrders = orders.length
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+    const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
+    const totalOrders = orders.length;
+
+    // Calculăm vânzările totale (suma tuturor produselor și bundle-urilor vândute)
+    const totalProductSales = products.reduce((acc, product) => acc + product.totalSales, 0);
+    const totalBundleSales = bundles.reduce((acc, bundle) => acc + bundle.totalSales, 0);
+    const totalSales = totalProductSales + totalBundleSales;
+
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     return NextResponse.json({
       timeline,
       products,
       bundles,
-      customers,
+      counties,
+      repeatCustomers,
       summary: {
         totalRevenue,
         totalOrders,
-        averageOrderValue
+        totalSales,
+        averageOrderValue,
+        // Adăugăm și detalii separate pentru o mai bună înțelegere
+        details: {
+          productSales: totalProductSales,
+          bundleSales: totalBundleSales,
+          productRevenue: products.reduce((acc, product) => acc + product.totalRevenue, 0),
+          bundleRevenue: bundles.reduce((acc, bundle) => acc + bundle.totalRevenue, 0)
+        }
       }
-    })
+    });
   } catch (error) {
-    console.error('Error fetching statistics:', error)
+    console.error('Error fetching statistics:', error);
     return NextResponse.json(
       { error: 'Failed to fetch statistics' },
       { status: 500 }
-    )
+    );
   }
 }
 

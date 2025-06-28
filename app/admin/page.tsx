@@ -13,110 +13,139 @@ import {
   BarChart3,
   Mail,
   LayoutDashboard,
+  Users,
+  FileText,
+  Settings,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import AdminDashboardStats from "@/components/AdminDashboardStats";
+
+async function getDashboardStats() {
+  try {
+    // Get total products
+    const totalProducts = await prisma.product.count();
+
+    // Get total orders
+    const totalOrders = await prisma.order.count();
+
+    // Get active discounts
+    const activeDiscounts = await prisma.discountCode.count({
+      where: {
+        OR: [
+          {
+            expirationDate: {
+              gt: new Date(),
+            },
+          },
+          {
+            expirationDate: null,
+          },
+        ],
+        usesLeft: {
+          gt: 0,
+        },
+      },
+    });
+
+    // Get total revenue from completed orders
+    const totalRevenue = await prisma.order.aggregate({
+      _sum: {
+        total: true,
+      },
+      where: {
+        paymentStatus: "COMPLETED",
+      },
+    });
+
+    return {
+      totalProducts,
+      totalOrders,
+      activeDiscounts,
+      totalRevenue: totalRevenue._sum.total || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    return {
+      totalProducts: 0,
+      totalOrders: 0,
+      activeDiscounts: 0,
+      totalRevenue: 0,
+    };
+  }
+}
 
 export default function AdminPage() {
-  const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const response = await fetch("/api/admin/check-status");
-      const data = await response.json();
-
-      if (!data.isAdmin) {
-        redirect("/");
-      }
-
-      setAdminStatus(data.isAdmin);
-    } catch (error) {
-      console.error("Error checking admin status:", error);
-      redirect("/");
-    }
-  };
-
-  if (adminStatus === null) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Total Products
-              </p>
-              <h3 className="text-2xl font-bold mt-1">24</h3>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <ShoppingBag className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Orders</p>
-              <h3 className="text-2xl font-bold mt-1">156</h3>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <Package className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Active Discounts
-              </p>
-              <h3 className="text-2xl font-bold mt-1">3</h3>
-            </div>
-            <div className="p-3 bg-red-50 rounded-lg">
-              <Tag className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-              <h3 className="text-2xl font-bold mt-1">$12,345</h3>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminDashboardStats />
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold mb-4">Acțiuni Rapide</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link href="/admin/products/new">
-            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
               <Plus className="h-5 w-5 text-primary" />
-              <span className="font-medium">Add New Product</span>
+              <span className="font-medium">Adaugă Produs Nou</span>
             </button>
           </Link>
+
+          <Link href="/admin/bundles/new">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <Package className="h-5 w-5 text-primary" />
+              <span className="font-medium">Creează Bundle Nou</span>
+            </button>
+          </Link>
+
           <Link href="/admin/discount">
-            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
               <Tag className="h-5 w-5 text-primary" />
-              <span className="font-medium">Create Discount</span>
+              <span className="font-medium">Creează Reducere</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/newsletter">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <Mail className="h-5 w-5 text-primary" />
+              <span className="font-medium">Trimite Newsletter</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/orders">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <FileText className="h-5 w-5 text-primary" />
+              <span className="font-medium">Vezi Comenzi Recente</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/users">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <Users className="h-5 w-5 text-primary" />
+              <span className="font-medium">Gestionare Utilizatori</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/statistics">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <span className="font-medium">Rapoarte & Statistici</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/products">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              <span className="font-medium">Gestionare Produse</span>
+            </button>
+          </Link>
+
+          <Link href="/admin/email-management">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors w-full">
+              <Settings className="h-5 w-5 text-primary" />
+              <span className="font-medium">Setări Email-uri</span>
             </button>
           </Link>
         </div>

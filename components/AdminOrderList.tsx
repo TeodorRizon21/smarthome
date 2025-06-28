@@ -25,6 +25,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Definiții pentru comanda de produse
 type OrderItem = {
@@ -32,9 +33,18 @@ type OrderItem = {
   productName: string;
   productId: string;
   quantity: number;
-  size: string;
+  color: string;
   price: number;
   image: string;
+  product?: {
+    colorVariants: Array<{
+      id: string;
+      productCode: string;
+      color: string;
+      price: number;
+      oldPrice: number | null;
+    }>;
+  };
 };
 
 // Definiții pentru comanda de bundle-uri
@@ -98,28 +108,37 @@ type Order = {
 };
 
 // Componenta pentru afișarea unui produs din comandă
-const ProductCard = ({ item }: { item: OrderItem }) => (
-  <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-    <Image
-      src={item.image}
-      alt={item.productName}
-      width={60}
-      height={60}
-      className="rounded-md object-cover"
-    />
-    <div className="flex-1">
-      <h4 className="font-medium">{item.productName}</h4>
-      <p className="text-sm text-gray-500">Size: {item.size}</p>
-      <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+const ProductCard = ({ item }: { item: OrderItem }) => {
+  const variant = item.product?.colorVariants?.find(
+    (v) => v.color === item.color
+  );
+
+  return (
+    <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+      <Image
+        src={item.image}
+        alt={item.productName}
+        width={60}
+        height={60}
+        className="rounded-md object-cover"
+      />
+      <div className="flex-1">
+        <h4 className="font-medium">{item.productName}</h4>
+        <p className="text-sm text-gray-500">
+          Variant:{" "}
+          {variant ? `${variant.color} (${variant.productCode})` : item.color}
+        </p>
+        <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+      </div>
+      <div className="text-right">
+        <p className="font-medium">{item.price.toFixed(2)} RON</p>
+        <p className="text-sm text-gray-500">
+          Total: {(item.price * item.quantity).toFixed(2)} RON
+        </p>
+      </div>
     </div>
-    <div className="text-right">
-      <p className="font-medium">{item.price.toFixed(2)} RON</p>
-      <p className="text-sm text-gray-500">
-        Total: {(item.price * item.quantity).toFixed(2)} RON
-      </p>
-    </div>
-  </div>
-);
+  );
+};
 
 // Componenta pentru afișarea unui bundle din comandă
 const BundleCard = ({ item }: { item: BundleOrderItem }) => (
@@ -166,6 +185,7 @@ type AdminOrderListProps = {
 export default function AdminOrderList({ orderType }: AdminOrderListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<string | null>(null);
@@ -179,6 +199,10 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
   const [completionFilter, setCompletionFilter] = useState<
     "all" | "completed" | "uncompleted"
   >("all");
+  const [bulkActionDialogOpen, setBulkActionDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<
+    "delete" | "fulfill" | "cancel" | null
+  >(null);
 
   // Lista de județe din România
   const counties = [
@@ -335,7 +359,7 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
           order.items.some(
             (item) =>
               item.productName.toLowerCase().includes(query) ||
-              item.size.toLowerCase().includes(query)
+              item.color.toLowerCase().includes(query)
           )
         )
           return true;
@@ -662,6 +686,64 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
     };
   }, [filteredOrders]);
 
+  const handleSelectAll = () => {
+    if (selectedOrders.length === filteredOrders.length) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(filteredOrders.map((order) => order.id));
+    }
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedOrders.length === 0) return;
+
+    try {
+      switch (bulkAction) {
+        case "delete":
+          await Promise.all(
+            selectedOrders.map((orderId) => handleDeleteOrder(orderId))
+          );
+          break;
+        case "fulfill":
+          await Promise.all(
+            selectedOrders.map((orderId) => handleFulfillOrder(orderId))
+          );
+          break;
+        case "cancel":
+          await Promise.all(
+            selectedOrders.map((orderId) =>
+              handleStatusChange(orderId, "Comanda anulată")
+            )
+          );
+          break;
+      }
+
+      setSelectedOrders([]);
+      setBulkAction(null);
+      setBulkActionDialogOpen(false);
+      await fetchOrders();
+      toast({
+        title: "Succes!",
+        description: "Operațiunea în bulk a fost efectuată cu succes.",
+      });
+    } catch (error) {
+      console.error("Error performing bulk action:", error);
+      toast({
+        title: "Eroare",
+        description: "A apărut o eroare la efectuarea operațiunii în bulk.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div>Loading {orderType} orders...</div>;
   }
@@ -676,7 +758,63 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="selectAll"
+            checked={
+              selectedOrders.length === filteredOrders.length &&
+              filteredOrders.length > 0
+            }
+            onCheckedChange={handleSelectAll}
+          />
+          <Label htmlFor="selectAll" className="text-sm font-medium">
+            Selectează toate ({filteredOrders.length})
+          </Label>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedOrders.length > 0 && (
+            <>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setBulkAction("delete");
+                  setBulkActionDialogOpen(true);
+                }}
+                className="whitespace-nowrap"
+              >
+                Șterge ({selectedOrders.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setBulkAction("fulfill");
+                  setBulkActionDialogOpen(true);
+                }}
+                className="whitespace-nowrap"
+              >
+                Îndeplinește ({selectedOrders.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setBulkAction("cancel");
+                  setBulkActionDialogOpen(true);
+                }}
+                className="whitespace-nowrap"
+              >
+                Anulează ({selectedOrders.length})
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col space-y-4">
         {/* Panou de statistici */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -848,124 +986,138 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
         )}
       </div>
 
-      {filteredOrders.map((order) => (
-        <Accordion type="single" collapsible key={order.id}>
-          <AccordionItem value={order.id}>
-            <AccordionTrigger>
-              <div className="flex flex-col items-start space-y-2 text-left">
-                <div className="flex items-center space-x-2">
-                  <span className="font-semibold">
-                    Order {order.orderNumber}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-600">
-                  Total: {order.total.toFixed(2)} RON
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">Order Status</h3>
-                  <p>Payment Status: {order.paymentStatus}</p>
-                  <p>Order Status: {order.orderStatus}</p>
-                  <p>
-                    Payment Method:{" "}
-                    {order.paymentType === "card"
-                      ? "Card"
-                      : "Ramburs la curier"}
-                  </p>
-                  {order.courier && <p>Courier: {order.courier}</p>}
-                  {order.awb && <p>AWB: {order.awb}</p>}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Customer Details</h3>
-                  <p>{order.details.fullName}</p>
-                  <p>{order.details.email}</p>
-                  <p>{order.details.phoneNumber}</p>
-                  <p>{order.details.street}</p>
-                  <p>
-                    {order.details.city}, {order.details.county}{" "}
-                    {order.details.postalCode}
-                  </p>
-                  <p>{order.details.country}</p>
-                  {order.details.notes && <p>Notes: {order.details.notes}</p>}
-
-                  {order.details.isCompany && (
-                    <div className="mt-4">
-                      <h3 className="font-semibold">Invoice Details</h3>
-                      <p>Company Name: {order.details.companyName}</p>
-                      <p>VAT Number: {order.details.companyCUI}</p>
-                      <p>
-                        Registration Number: {order.details.companyRegNumber}
-                      </p>
-                      <p>
-                        Address: {order.details.companyAddress},{" "}
-                        {order.details.companyCity},{" "}
-                        {order.details.companyCounty}
-                      </p>
+      <Accordion type="single" collapsible className="space-y-4">
+        {filteredOrders.map((order) => (
+          <AccordionItem
+            key={order.id}
+            value={order.id}
+            className="border rounded-lg bg-white shadow-sm"
+          >
+            <div className="flex items-center px-4 py-2">
+              <Checkbox
+                checked={selectedOrders.includes(order.id)}
+                onCheckedChange={() => handleSelectOrder(order.id)}
+                className="mr-4"
+              />
+              <AccordionTrigger className="flex-1 hover:no-underline">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 text-left">
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">
+                        Comanda {order.orderNumber}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        ({new Date(order.createdAt).toLocaleDateString("ro-RO")}
+                        )
+                      </span>
                     </div>
-                  )}
+                    <span className="text-sm text-gray-500">
+                      {order.details.fullName}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        order.paymentStatus === "COMPLETED"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {order.paymentStatus === "COMPLETED"
+                        ? "Plătit"
+                        : "În așteptare"}
+                    </span>
+                    <span className="font-medium">
+                      {order.total.toFixed(2)} RON
+                    </span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+            </div>
+            <AccordionContent>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Order Status */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">
+                      Order Status
+                    </h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500">Payment Status:</p>
+                        <p className="text-sm font-medium">
+                          {order.paymentStatus}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Order Status:</p>
+                        <p className="text-sm font-medium">
+                          {order.orderStatus}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Payment Method:</p>
+                        <p className="text-sm font-medium">
+                          {order.paymentType === "card"
+                            ? "Plată cu cardul"
+                            : "Ramburs la curier"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Button
-                    onClick={() =>
-                      window.open(`/api/orders/${order.id}/invoice`, "_blank")
-                    }
-                    className="mt-4"
-                  >
-                    Descarcă Factura
-                  </Button>
+                  {/* Customer Details */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">
+                      Customer Details
+                    </h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500">Name:</p>
+                        <p className="text-sm font-medium">
+                          {order.details.fullName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Email:</p>
+                        <p className="text-sm font-medium">
+                          {order.details.email}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Phone:</p>
+                        <p className="text-sm font-medium">
+                          {order.details.phoneNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Address:</p>
+                        <p className="text-sm font-medium">
+                          {order.details.street}, {order.details.city},{" "}
+                          {order.details.county}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {order.discountCodes && order.discountCodes.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold">Applied Discounts</h3>
-                    {order.discountCodes.map((discount) => (
-                      <p key={discount.code}>
-                        {discount.code}:{" "}
-                        {discount.type === "free_shipping"
-                          ? "Free Shipping"
-                          : discount.type === "percentage"
-                          ? `${discount.value}% off`
-                          : `${discount.value.toFixed(2)} RON off`}
-                      </p>
+                {/* Order Items */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Order Items
+                  </h3>
+                  <div className="space-y-4">
+                    {order.items.map((item) => (
+                      <ProductCard key={item.id} item={item} />
+                    ))}
+                    {order.bundleOrders?.map((item) => (
+                      <BundleCard key={item.id} item={item} />
                     ))}
                   </div>
-                )}
+                </div>
 
-                {/* Detalii specifice pentru tipul de comandă */}
-                {orderType === "product"
-                  ? // Detalii pentru produse
-                    order.items.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold">Order Items</h3>
-                        <div className="mt-2 space-y-2">
-                          {order.items.map((item) => (
-                            <ProductCard key={item.id} item={item} />
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  : // Detalii pentru bundle-uri
-                    order.bundleOrders.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold">Bundle Details</h3>
-                        <div className="mt-2 space-y-2">
-                          {order.bundleOrders.map((bundleOrder) => (
-                            <BundleCard
-                              key={bundleOrder.id}
-                              item={bundleOrder}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                <div className="space-y-4">
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-3 pt-4 border-t">
                   {editingOrder === order.id ? (
                     <Card>
                       <CardContent className="pt-6 space-y-4">
@@ -1056,8 +1208,35 @@ export default function AdminOrderList({ orderType }: AdminOrderListProps) {
               </div>
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
-      ))}
+        ))}
+      </Accordion>
+
+      <AlertDialog
+        open={bulkActionDialogOpen}
+        onOpenChange={setBulkActionDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare acțiune în bulk</AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkAction === "delete" &&
+                "Sigur doriți să ștergeți comenzile selectate?"}
+              {bulkAction === "fulfill" &&
+                "Sigur doriți să marcați comenzile selectate ca îndeplinite?"}
+              {bulkAction === "cancel" &&
+                "Sigur doriți să anulați comenzile selectate?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBulkAction(null)}>
+              Anulează
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkAction}>
+              Confirmă
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={!!deleteOrderId}

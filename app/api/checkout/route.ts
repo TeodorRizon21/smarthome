@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
+import { generateOrderNumber } from '@/lib/order-number';
 
 export async function POST(req: Request) {
   try {
@@ -15,10 +16,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Order details are required' }, { status: 400 });
     }
 
+    // Generate order number
+    const orderNumber = await generateOrderNumber();
+
     // Create the order in the database
     const order = await prisma.order.create({
       data: {
-        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        orderNumber,
         userId,
         total: items.reduce((acc: number, item: { product: { price: number; }; quantity: number; }) => acc + item.product.price * item.quantity, 0),
         paymentStatus: 'PENDING',

@@ -6,6 +6,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import { sendAdminNotification, sendOrderConfirmation } from "@/lib/email";
 import { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
+import { generateOrderNumber } from "@/lib/order-number";
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -28,7 +29,8 @@ export default async function CheckoutSuccessPage({
             Eroare: Informații lipsă
           </h1>
           <p className="mb-4">
-            Nu s-au găsit informații despre comandă. Vă rugăm să verificați link-ul sau să încercați din nou.
+            Nu s-au găsit informații despre comandă. Vă rugăm să verificați
+            link-ul sau să încercați din nou.
           </p>
           <div className="mt-6">
             <a
@@ -61,7 +63,9 @@ export default async function CheckoutSuccessPage({
         throw new Error("Missing order details ID in session metadata");
       }
 
-      console.log(`Searching for existing order with detailsId: ${session.metadata.detailsId}`);
+      console.log(
+        `Searching for existing order with detailsId: ${session.metadata.detailsId}`
+      );
 
       const existingOrder = await prisma.order.findFirst({
         where: {
@@ -96,8 +100,10 @@ export default async function CheckoutSuccessPage({
         );
         order = existingOrder;
       } else {
-        console.log("No existing order found for session, searching for any recent order with same detailsId...");
-        
+        console.log(
+          "No existing order found for session, searching for any recent order with same detailsId..."
+        );
+
         // Fallback: search for any recent order with the same detailsId
         const fallbackOrder = await prisma.order.findFirst({
           where: {
@@ -166,64 +172,70 @@ export default async function CheckoutSuccessPage({
 
           // Use a transaction to create order and update stock
           try {
-            order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-              console.log("Creating order...");
-              // Create the order first
-              const newOrder = await tx.order.create({
-                data: {
-                  orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  userId,
-                  total: session.amount_total! / 100,
-                  paymentStatus: "COMPLETED",
-                  orderStatus: "Comanda este in curs de procesare",
-                  paymentType: "card",
-                  orderType: orderType || "product",
-                  details: { connect: { id: detailsId } },
-                  items:
-                    parsedRegularItems.length > 0
-                      ? {
-                          create: parsedRegularItems.map((item: any) => ({
-                            productId: item.productId,
-                            quantity: item.quantity,
-                            color: item.color,
-                            price: item.price,
-                          })),
-                        }
-                      : undefined,
-                  BundleOrder:
-                    parsedBundleItems.length > 0
-                      ? {
-                          create: parsedBundleItems.map((item: any) => ({
-                            bundleId: item.bundleId,
-                            quantity: item.quantity,
-                            price: item.price,
-                          })),
-                        }
-                      : undefined,
-                  discountCodes: {
-                    create: parsedDiscounts.map((discount: any) => ({
-                      discountCode: { connect: { code: discount.code } },
-                    })),
+            order = await prisma.$transaction(
+              async (tx: Prisma.TransactionClient) => {
+                console.log("Creating order...");
+                // Create the order first
+                const orderNumber = await generateOrderNumber();
+                const newOrder = await tx.order.create({
+                  data: {
+                    orderNumber,
+                    userId: userId || null,
+                    total: session.amount_total! / 100,
+                    paymentStatus: "COMPLETED",
+                    orderStatus: "Comanda este in curs de procesare",
+                    paymentType: "card",
+                    orderType: orderType || "product",
+                    details: { connect: { id: detailsId } },
+                    items:
+                      parsedRegularItems.length > 0
+                        ? {
+                            create: parsedRegularItems.map((item: any) => ({
+                              productId: item.productId,
+                              quantity: item.quantity,
+                              color: item.color,
+                              price: item.price,
+                            })),
+                          }
+                        : undefined,
+                    BundleOrder:
+                      parsedBundleItems.length > 0
+                        ? {
+                            create: parsedBundleItems.map((item: any) => ({
+                              bundleId: item.bundleId,
+                              quantity: item.quantity,
+                              price: item.price,
+                            })),
+                          }
+                        : undefined,
+                    discountCodes:
+                      parsedDiscounts.length > 0
+                        ? {
+                            create: parsedDiscounts.map((code: any) => ({
+                              discountCode: { connect: { code: code.code } },
+                            })),
+                          }
+                        : undefined,
                   },
-                },
-                include: {
-                  items: {
-                    include: {
-                      product: true,
+                  include: {
+                    items: {
+                      include: {
+                        product: true,
+                      },
                     },
-                  },
-                  BundleOrder: {
-                    include: {
-                      bundle: true,
+                    BundleOrder: {
+                      include: {
+                        bundle: true,
+                      },
                     },
+                    details: true,
                   },
-                  details: true,
-                },
-              });
+                });
 
-              console.log("Order created: ", newOrder.id);
-              return newOrder;
-            });
+                console.log("Order created: ", newOrder.id);
+                return newOrder;
+              }
+            );
           } catch (txError) {
             console.error("Transaction error:", txError);
             throw txError;
@@ -298,7 +310,7 @@ export default async function CheckoutSuccessPage({
     // Get order details from the included relation
     const orderWithDetails = await prisma.order.findUnique({
       where: { id: order.id },
-      include: { details: true }
+      include: { details: true },
     });
 
     if (!orderWithDetails?.details) {
@@ -335,7 +347,11 @@ export default async function CheckoutSuccessPage({
     }
 
     return (
-      <SuccessContent orderId={order.id} paymentType={order.paymentType} orderNumber={order.orderNumber} />
+      <SuccessContent
+        orderId={order.id}
+        paymentType={order.paymentType}
+        orderNumber={order.orderNumber}
+      />
     );
   } catch (error: any) {
     console.error("Error processing order:", error);

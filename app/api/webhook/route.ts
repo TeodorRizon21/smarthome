@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
+import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import { sendAdminNotification, sendOrderConfirmation } from '@/lib/email';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia',
-});
+import { generateOrderNumber } from '@/lib/order-number';
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -124,9 +122,10 @@ export async function POST(req: Request) {
       }
 
       console.log('Creating new order...');
+      const orderNumber = await generateOrderNumber();
       const order = await prisma.order.create({
         data: {
-          orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          orderNumber,
           userId: userId || null,
           total: session.amount_total! / 100,
           paymentStatus: 'COMPLETED',

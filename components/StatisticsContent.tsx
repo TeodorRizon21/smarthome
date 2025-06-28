@@ -34,7 +34,6 @@ import { Button } from "@/components/ui/button";
 type Statistics = {
   timeline: Array<{
     timestamp: string;
-    sales: number;
     revenue: number;
   }>;
   products: Array<{
@@ -60,9 +59,18 @@ type Statistics = {
     orderCount: number;
     totalRevenue: number;
   }>;
-  totalSales: number;
-  totalRevenue: number;
-  orderCount: number;
+  summary: {
+    totalRevenue: number;
+    totalOrders: number;
+    totalSales: number;
+    averageOrderValue: number;
+    details: {
+      productSales: number;
+      bundleSales: number;
+      productRevenue: number;
+      bundleRevenue: number;
+    };
+  };
 };
 
 export default function StatisticsContent() {
@@ -221,7 +229,7 @@ export default function StatisticsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">
-              {isLoading ? "..." : stats?.orderCount || 0}
+              {isLoading ? "..." : stats?.summary.totalOrders || 0}
             </p>
           </CardContent>
         </Card>
@@ -232,7 +240,7 @@ export default function StatisticsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">
-              {isLoading ? "..." : stats?.totalSales || 0}
+              {isLoading ? "..." : stats?.summary.totalSales || 0}
             </p>
           </CardContent>
         </Card>
@@ -243,7 +251,9 @@ export default function StatisticsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">
-              {isLoading ? "..." : formatCurrency(stats?.totalRevenue || 0)}
+              {isLoading
+                ? "..."
+                : formatCurrency(stats?.summary.totalRevenue || 0)}
             </p>
           </CardContent>
         </Card>

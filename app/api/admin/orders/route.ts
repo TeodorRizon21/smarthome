@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { generateOrderNumber } from '@/lib/order-number'
 
 interface OrderDetails {
   id: string;
@@ -33,6 +34,13 @@ interface OrderItem {
     id: string;
     name: string;
     images: string[];
+    colorVariants: Array<{
+      id: string;
+      productCode: string;
+      color: string;
+      price: number;
+      oldPrice: number | null;
+    }>;
   };
 }
 
@@ -88,6 +96,25 @@ interface ProductMap {
   [id: string]: Product;
 }
 
+interface FormattedOrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  color: string;
+  price: number;
+  image: string;
+  product: {
+    colorVariants: Array<{
+      id: string;
+      productCode: string;
+      color: string;
+      price: number;
+      oldPrice: number | null;
+    }>;
+  };
+}
+
 // Type that matches Prisma's return structure
 interface PrismaOrder {
   id: string;
@@ -113,6 +140,13 @@ interface PrismaOrder {
       id: string;
       name: string;
       images: string[];
+      colorVariants: Array<{
+        id: string;
+        productCode: string;
+        color: string;
+        price: number;
+        oldPrice: number | null;
+      }>;
     };
   }>;
   BundleOrder: Array<{
@@ -179,7 +213,8 @@ export async function GET(request: Request) {
               select: {
                 id: true,
                 name: true,
-                images: true
+                images: true,
+                colorVariants: true
               }
             }
           }
@@ -256,25 +291,26 @@ export async function GET(request: Request) {
     // Formăm răspunsul cu produsele disponibile
     const formattedOrders = filteredOrders.map((order) => ({
       id: order.id,
+      orderNumber: order.orderNumber,
       createdAt: order.createdAt.toISOString(),
       total: order.total,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
       orderType: order.orderType,
-      items: order.items.map(item => {
-        const product = productsMap[item.productId];
-        return {
-          id: item.id,
-          productId: item.productId,
-          productName: product ? product.name : 'Produs indisponibil',
-          quantity: item.quantity,
-          color: item.size,
-          price: item.price,
-          image: product && product.images && product.images.length > 0 
-            ? product.images[0] 
-            : '/placeholder.svg'
-        };
-      }),
+      items: order.items.map((item): FormattedOrderItem => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.product ? item.product.name : 'Produs indisponibil',
+        quantity: item.quantity,
+        color: item.color,
+        price: item.price,
+        image: item.product && item.product.images && item.product.images.length > 0 
+          ? item.product.images[0] 
+          : '/placeholder.svg',
+        product: {
+          colorVariants: item.product?.colorVariants || []
+        }
+      })),
       bundleOrders: order.BundleOrder.map(bundleOrder => ({
         id: bundleOrder.id,
         bundleId: bundleOrder.bundleId,
@@ -332,9 +368,10 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { userId, total, items, bundleOrders, details, paymentType, discountCodes, orderType } = body
 
+    const orderNumber = await generateOrderNumber();
     const order = await prisma.order.create({
       data: {
-        orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        orderNumber,
         userId: userId || null,
         total: total,
         paymentStatus: 'PENDING',
@@ -347,6 +384,7 @@ export async function POST(request: Request) {
             productId: item.productId,
             quantity: item.quantity,
             color: item.color,
+            size: item.size,
             price: item.price,
           }))
         } : undefined,
