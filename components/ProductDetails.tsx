@@ -199,7 +199,7 @@ export default function ProductDetails({
             </div>
             <Button
               onClick={handleAddToCart}
-              className="flex-1 bg-[#FFD66C] hover:bg-[#ffc936] text-base md:text-lg py-4 md:py-6 text-black flex items-center justify-center gap-2"
+              className="flex-1 bg-[#29b4b9] hover:bg-[#4adde4] text-base md:text-lg py-4 md:py-6 text-black flex items-center justify-center gap-2"
             >
               <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
               <span>Cumpără</span>

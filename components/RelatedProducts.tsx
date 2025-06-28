@@ -10,9 +10,11 @@ import ProductCard from "./ProductCard";
 export default function RelatedProducts({
   products,
   currentProductId,
+  category,
 }: {
   products: ProductWithVariants[];
   currentProductId: string;
+  category: string;
 }) {
   // Filter out the current product
   const filteredProducts = products.filter(
@@ -20,7 +22,7 @@ export default function RelatedProducts({
   );
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
+    loop: filteredProducts.length > 4,
     align: "start",
     slidesToScroll: 1,
   });
@@ -41,10 +43,12 @@ export default function RelatedProducts({
         <div className="py-12">
           <div className="text-center space-y-2 mb-12 font-poppins relative pb-6">
             <p className="text-sm uppercase tracking-wider text-black font-medium">
-              DISCOVER MORE FRAGRANCES
+              DESCOPERIȚI MAI MULTE PRODUSE
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold">Similar Products</h2>
-            <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Produse similare din categoria {category}
+            </h2>
+            <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#29b4b9]"></div>
           </div>
 
           {/* Mobile View - Stack */}
@@ -76,7 +80,7 @@ export default function RelatedProducts({
             <Button
               variant="outline"
               size="icon"
-              className="absolute -left-8 top-1/2 -translate-y-1/2 bg-[#FFD66C] hover:bg-[#ffc936] transition-colors duration-300 rounded-2xl border-none z-10"
+              className="absolute -left-8 top-1/2 -translate-y-1/2 bg-[#29b4b9] hover:bg-[#4adde4] transition-colors duration-300 rounded-2xl border-none z-10"
               onClick={scrollPrev}
             >
               <ChevronLeft className="h-6 w-6 text-black" />
@@ -84,7 +88,7 @@ export default function RelatedProducts({
             <Button
               variant="outline"
               size="icon"
-              className="absolute -right-8 top-1/2 -translate-y-1/2 bg-[#FFD66C] hover:bg-[#ffc936] transition-colors duration-300 rounded-2xl border-none z-10"
+              className="absolute -right-8 top-1/2 -translate-y-1/2 bg-[#29b4b9] hover:bg-[#4adde4] transition-colors duration-300 rounded-2xl border-none z-10"
               onClick={scrollNext}
             >
               <ChevronRight className="h-6 w-6 text-black" />

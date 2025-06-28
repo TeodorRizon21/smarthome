@@ -65,7 +65,7 @@ export default function OrderHistory({ userId }: { userId: string }) {
           YOUR SHOPPING HISTORY
         </p>
         <h2 className="text-3xl md:text-4xl font-bold">Recent Orders</h2>
-        <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
+        <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#29b4b9]"></div>
       </div>
       <div className="space-y-8">
         {orders.map((order) => (

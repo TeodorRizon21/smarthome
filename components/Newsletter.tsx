@@ -45,7 +45,7 @@ export default function Newsletter() {
 
   return (
     <div className="w-screen relative left-[50%] right-[50%] -mx-[50vw]">
-      <div className="bg-[#FFD66C] py-16 rounded-tl-[100px] rounded-tr-[100px]">
+      <div className="bg-[#29b4b9] py-16 rounded-tl-[100px] rounded-tr-[100px]">
         <div className="px-6 max-w-[1400px] mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-evenly gap-4">
             {/* Text section */}

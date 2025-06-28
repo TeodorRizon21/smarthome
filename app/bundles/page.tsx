@@ -71,7 +71,7 @@ export default function BundlesPage() {
       price: bundle.price,
       oldPrice: bundle.oldPrice,
       productId: `bundle-${bundle.id}`,
-      productCode: `BUNDLE-${bundle.id}`
+      productCode: `BUNDLE-${bundle.id}`,
     };
 
     // Add to cart using dispatch
@@ -89,7 +89,7 @@ export default function BundlesPage() {
           oldPrice: bundle.oldPrice,
           createdAt: new Date(),
           updatedAt: new Date(),
-          colorVariants: [bundleVariant]
+          colorVariants: [bundleVariant],
         },
         color: "standard",
         variant: bundleVariant,
@@ -105,7 +105,7 @@ export default function BundlesPage() {
         <ToastAction altText="Vezi coșul" asChild>
           <Link
             href="/cart"
-            className="bg-[#FFD66C] hover:bg-[#ffc936] text-black transition-colors"
+            className="bg-[#29b4b9] hover:bg-[#4adde4] text-black transition-colors"
           >
             Vezi coșul
           </Link>

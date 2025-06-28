@@ -40,7 +40,7 @@ export default async function ProductList() {
           CHOOSE THE RIGHT FRAGRANCE FOR YOU
         </p>
         <h2 className="text-3xl md:text-4xl font-bold">Featured products</h2>
-        <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
+        <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#29b4b9]"></div>
       </div>
 
       {/* Mobile View - Stack */}
@@ -68,7 +68,7 @@ export default async function ProductList() {
           <h2 className="text-3xl md:text-4xl font-bold">
             Povestea SmartHomeMall
           </h2>
-          <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
+          <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#29b4b9]"></div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -110,12 +110,15 @@ export default async function ProductList() {
           <h2 className="text-3xl md:text-4xl font-bold">
             Descoperă toate categoriile
           </h2>
-          <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#FFD66C]"></div>
+          <div className="absolute -bottom-[0.2rem] left-1/2 transform -translate-x-1/2 w-40 h-1 bg-[#29b4b9]"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Video Door Phone Category Card */}
-          <Link href="/products?category=Video%20Door%20Phone" className="group">
+          <Link
+            href="/products?category=Video%20Door%20Phone"
+            className="group"
+          >
             <div className="relative overflow-hidden rounded-lg">
               <Image
                 src="/mencol.webp"
@@ -186,7 +189,10 @@ export default async function ProductList() {
           </Link>
 
           {/* Smart Home Automation Category Card */}
-          <Link href="/products?category=Smart%20Home%20Automation" className="group">
+          <Link
+            href="/products?category=Smart%20Home%20Automation"
+            className="group"
+          >
             <div className="relative h-[400px] rounded-[30px] overflow-hidden">
               <Image
                 src="/unisexcol.webp"

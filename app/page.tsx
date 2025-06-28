@@ -6,23 +6,39 @@ import BundleShowcase from "@/components/BundleShowcase";
 import InstallationShowcase from "@/components/InstallationShowcase";
 import type { ProductWithVariants, Product, ColorVariant } from "@/lib/types";
 
+// Dezactivăm cache-ul static pentru această pagină
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function getProducts(): Promise<ProductWithVariants[]> {
   try {
+    // First, get the total count of products
+    const count = await prisma.product.count();
+
+    // Generate a random skip value
+    const skip = Math.max(
+      0,
+      Math.floor(Math.random() * Math.max(0, count - 12))
+    );
+
     const products = await prisma.product.findMany({
       include: {
         colorVariants: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      skip: skip,
       take: 12,
     });
 
-    return products.map((product) => {
+    // Shuffle the products array
+    const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+
+    return shuffledProducts.map((product) => {
       // Calculate aggregate values from colorVariants
-      const minVariant = product.colorVariants.reduce((min: ColorVariant | null, variant: ColorVariant) => 
-        (!min || variant.price < min.price) ? variant : min
-      , product.colorVariants[0]);
+      const minVariant = product.colorVariants.reduce(
+        (min: ColorVariant | null, variant: ColorVariant) =>
+          !min || variant.price < min.price ? variant : min,
+        product.colorVariants[0]
+      );
 
       return {
         id: product.id,
@@ -83,85 +99,88 @@ async function getBundles() {
 const residentialInstallations = [
   {
     title: "Vila Smart Pipera",
-    description: "Sistem complet de automatizare pentru o vilă de lux din Pipera, incluzând control lumini, temperatură, securitate și entertainment.",
+    description:
+      "Sistem complet de automatizare pentru o vilă de lux din Pipera, incluzând control lumini, temperatură, securitate și entertainment.",
     image: "/smart-residence.jpg",
     stats: [
       { label: "Economie Energie", value: "35%" },
       { label: "Camere Control", value: "12" },
       { label: "Dispozitive", value: "45+" },
-      { label: "Timp Instalare", value: "14 zile" }
-    ]
+      { label: "Timp Instalare", value: "14 zile" },
+    ],
   },
   {
     title: "Apartament Premium Aviației",
-    description: "Soluție inteligentă pentru un apartament modern, cu focus pe eficiență energetică și confort.",
+    description:
+      "Soluție inteligentă pentru un apartament modern, cu focus pe eficiență energetică și confort.",
     image: "/img1.jpg",
     stats: [
       { label: "Economie Energie", value: "28%" },
       { label: "Camere Control", value: "6" },
       { label: "Dispozitive", value: "25+" },
-      { label: "Timp Instalare", value: "7 zile" }
-    ]
+      { label: "Timp Instalare", value: "7 zile" },
+    ],
   },
   {
     title: "Casa Inteligentă Corbeanca",
-    description: "Sistem integrat de smart home cu accent pe securitate și automatizare completă.",
+    description:
+      "Sistem integrat de smart home cu accent pe securitate și automatizare completă.",
     image: "/img11.jpg",
     stats: [
       { label: "Economie Energie", value: "40%" },
       { label: "Camere Control", value: "8" },
       { label: "Dispozitive", value: "35+" },
-      { label: "Timp Instalare", value: "10 zile" }
-    ]
-  }
+      { label: "Timp Instalare", value: "10 zile" },
+    ],
+  },
 ];
 
 const commercialInstallations = [
   {
     title: "Clădire de Birouri Floreasca",
-    description: "Sistem complex de automatizare pentru o clădire de birouri cu 6 etaje, incluzând control acces și management energetic.",
+    description:
+      "Sistem complex de automatizare pentru o clădire de birouri cu 6 etaje, incluzând control acces și management energetic.",
     image: "/smart-comercial.jpg",
     stats: [
       { label: "Economie Energie", value: "45%" },
       { label: "Suprafață", value: "2500m²" },
       { label: "Dispozitive", value: "120+" },
-      { label: "ROI", value: "2 ani" }
-    ]
+      { label: "ROI", value: "2 ani" },
+    ],
   },
   {
     title: "Hotel Boutique Centru",
-    description: "Soluție completă de automatizare hotelieră cu control individual pentru 28 de camere.",
+    description:
+      "Soluție completă de automatizare hotelieră cu control individual pentru 28 de camere.",
     image: "/smart-hotel.jpg",
     stats: [
       { label: "Economie Energie", value: "38%" },
       { label: "Camere", value: "28" },
       { label: "Dispozitive", value: "150+" },
-      { label: "Satisfacție", value: "98%" }
-    ]
+      { label: "Satisfacție", value: "98%" },
+    ],
   },
   {
     title: "Restaurant Smart Decebal",
-    description: "Sistem integrat de control pentru iluminat, HVAC și ambianță, cu focus pe experiența clientului.",
+    description:
+      "Sistem integrat de control pentru iluminat, HVAC și ambianță, cu focus pe experiența clientului.",
     image: "/office-case.jpg",
     stats: [
       { label: "Economie Energie", value: "32%" },
       { label: "Zone Control", value: "6" },
       { label: "Dispozitive", value: "40+" },
-      { label: "ROI", value: "18 luni" }
-    ]
-  }
+      { label: "ROI", value: "18 luni" },
+    ],
+  },
 ];
 
 export default async function Home() {
-  const [bundles, products] = await Promise.all([
-    getBundles(),
-    getProducts()
-  ]);
+  const [bundles, products] = await Promise.all([getBundles(), getProducts()]);
 
   return (
     <main className="min-h-screen">
       <SmartHomeHero />
-      
+
       {/* Featured Products Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto">
@@ -178,7 +197,7 @@ export default async function Home() {
         subtitle="Descoperă cum am transformat case obișnuite în locuințe inteligente și eficiente"
         installations={residentialInstallations}
       />
-      
+
       {/* Bundles Section */}
       {bundles.length > 0 && (
         <section className="py-16 bg-white">

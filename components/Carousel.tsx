@@ -103,7 +103,7 @@ export default function Carousel({ images }: CarouselProps) {
                 onClick={() => setCurrentIndex(index)}
                 className={cn(
                   "w-2 h-2 rounded-full transition-colors",
-                  currentIndex === index ? "bg-[#FFD66C]" : "bg-gray-300"
+                  currentIndex === index ? "bg-[#29b4b9]" : "bg-gray-300"
                 )}
               />
             ))}
