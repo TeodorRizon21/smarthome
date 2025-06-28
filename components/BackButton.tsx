@@ -8,8 +8,15 @@ export default function BackButton() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Don't show the back button on the home page or admin pages
-  if (pathname === '/' || pathname.startsWith('/admin')) {
+  // Don't show the back button on the home page, admin pages, smart home service pages, products pages, or about page
+  if (pathname === '/' || 
+      pathname.startsWith('/admin') || 
+      pathname.startsWith('/smart-') ||
+      pathname.startsWith('/products') ||
+      pathname === '/despre' ||
+      pathname === '/cart' ||
+      pathname === '/termeni-conditii' ||
+      pathname === '/politica-confidentialitate') {
     return null
   }
 

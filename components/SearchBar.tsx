@@ -80,7 +80,7 @@ export default function SearchBar({ className, transparent }: SearchBarProps) {
   };
 
   return (
-    <div className={`relative ${className}`} ref={searchRef}>
+    <div className={`relative search-dropdown ${className || ''}`} ref={searchRef}>
       <div className="flex items-center relative w-full">
         <Input
           type="text"

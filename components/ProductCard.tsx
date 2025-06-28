@@ -99,7 +99,7 @@ export default function ProductCard({
 
   return (
     <Link href={productUrl} className="block h-full">
-      <div className="relative w-[250px] h-[400px] bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
+      <div className="relative h-full bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
         {/* Best Seller Badge */}
         {isBestSeller && (
           <div className="absolute top-3 left-3 z-10">

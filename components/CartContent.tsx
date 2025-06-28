@@ -167,7 +167,7 @@ export default function CartContent() {
 
   if (state.items.length === 0) {
     return (
-      <div className="container mx-auto px-6 py-12">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] w-full">
         <div className="text-center space-y-6">
           <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
           <h1 className="text-3xl font-bold">Your cart is empty</h1>

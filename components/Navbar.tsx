@@ -111,11 +111,6 @@ export default function Navbar() {
           transparent ? "text-white group-hover:text-blue-600" : "text-blue-900"
         }
       />
-      {isSearchVisible && (
-        <div className="search-dropdown absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 p-2">
-          <SearchBar />
-        </div>
-      )}
     </Button>
   );
 
@@ -257,7 +252,14 @@ export default function Navbar() {
                   <div className="flex-1 flex justify-end">
                     {/* Right section */}
                     <div className="flex items-center gap-4">
-                      <SearchButton />
+                      <div className="relative">
+                        <SearchButton />
+                        {isSearchVisible && (
+                          <div className="search-dropdown absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 p-2">
+                            <SearchBar />
+                          </div>
+                        )}
+                      </div>
 
                       {isAdmin && (
                         <Link href="/admin">
@@ -468,7 +470,14 @@ export default function Navbar() {
 
                   {/* Right section */}
                   <div className="flex items-center gap-4">
-                    <SearchButton />
+                    <div className="relative">
+                      <SearchButton />
+                      {isSearchVisible && (
+                        <div className="search-dropdown absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 p-2">
+                          <SearchBar />
+                        </div>
+                      )}
+                    </div>
 
                     {isAdmin && (
                       <Link href="/admin">

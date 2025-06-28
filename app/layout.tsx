@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import CollectionsNav from "@/components/CollectionsNav";
 import BackButton from "@/components/BackButton";
 import { Toaster } from "@/components/ui/toaster";
+import Footer from '@/components/Footer';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -32,6 +33,7 @@ export default function RootLayout({
               <BackButton />
               {children}
               <Toaster />
+              <Footer />
             </CartProvider>
           </LanguageProvider>
         </body>

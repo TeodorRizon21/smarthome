@@ -7,6 +7,8 @@ import { ShoppingCart, Package } from "lucide-react";
 import { Bundle } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { useCart } from "@/contexts/cart-context";
+import { toast } from "@/hooks/use-toast";
 
 interface BundleShowcaseProps {
   bundles: Bundle[];
@@ -17,9 +19,52 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
     return null;
   }
 
+  const { dispatch } = useCart();
+
   const handleAddToCart = (bundle: Bundle) => {
-    // TODO: Implement add to cart functionality for bundles
-    console.log("Add bundle to cart:", bundle);
+    dispatch({
+      type: "ADD_TO_CART",
+      payload: {
+        product: {
+          id: `bundle-${bundle.id}`,
+          name: bundle.name,
+          description: bundle.description,
+          images: bundle.images,
+          category: "bundle",
+          subcategory: null,
+          price: bundle.price,
+          oldPrice: bundle.oldPrice,
+          pdfUrl: null,
+          tags: ["bundle"],
+          createdAt: bundle.createdAt,
+          updatedAt: bundle.updatedAt,
+          colorVariants: [
+            {
+              id: `bundle-${bundle.id}`,
+              productCode: `bundle-${bundle.id}`,
+              color: "standard",
+              price: bundle.price,
+              oldPrice: bundle.oldPrice,
+              productId: `bundle-${bundle.id}`,
+            },
+          ],
+        },
+        color: "standard",
+        variant: {
+          id: `bundle-${bundle.id}`,
+          productCode: `bundle-${bundle.id}`,
+          color: "standard",
+          price: bundle.price,
+          oldPrice: bundle.oldPrice,
+          productId: `bundle-${bundle.id}`,
+        },
+        quantity: 1,
+      },
+    });
+    toast({
+      title: "Pachet adăugat în coș!",
+      description: `${bundle.name} a fost adăugat în coșul tău.`,
+    });
   };
 
   return (
@@ -88,10 +133,10 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart
+                  Adaugă în coș
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href={`/bundles/${bundle.id}`}>View Details</Link>
+                  <Link href={`/bundles/${bundle.id}`}>Arată detalii</Link>
                 </Button>
               </div>
             </CardContent>

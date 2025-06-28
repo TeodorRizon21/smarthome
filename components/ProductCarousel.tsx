@@ -47,15 +47,13 @@ export default function ProductCarousel({
   return (
     <div className="relative max-w-[1400px] mx-auto px-4">
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-4 md:gap-6 py-4">
+        <div className="flex gap-6 md:gap-8 py-4">
           {products.map((product) => (
             <div
               key={`${product.id}-${product.name}`}
-              className="flex-none w-[calc(100%-1rem)] sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] px-2"
+              className="flex-none w-full sm:w-1/2 lg:w-1/3 px-0"
             >
-              <div className="flex justify-center">
-                <ProductCard product={product} />
-              </div>
+              <ProductCard product={product} />
             </div>
           ))}
         </div>
