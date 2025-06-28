@@ -46,8 +46,11 @@ export default function EditProductForm({ product }: EditProductFormProps) {
   const [name, setName] = useState(product.name);
   const [description, setDescription] = useState(product.description);
   const [images, setImages] = useState<string[]>(product.images);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(product.pdfUrl || null);
   const [category, setCategory] = useState<string>(product.category);
-  const [subcategory, setSubcategory] = useState<string>(product.subcategory || "");
+  const [subcategory, setSubcategory] = useState<string>(
+    product.subcategory || ""
+  );
   const [colorVariants, setColorVariants] = useState<ColorVariant[]>(
     product.colorVariants.map((variant) => ({
       id: variant.id,
@@ -136,7 +139,8 @@ export default function EditProductForm({ product }: EditProductFormProps) {
       if (!variant.productCode || !variant.color || !variant.price) {
         toast({
           title: "Error",
-          description: "All color variants must have a product code, color, and price",
+          description:
+            "All color variants must have a product code, color, and price",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -168,7 +172,9 @@ export default function EditProductForm({ product }: EditProductFormProps) {
           description,
           images,
           category,
-          subcategory: category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
+          subcategory:
+            category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
+          pdfUrl,
           colorVariants: colorVariants.map((variant) => ({
             id: variant.id,
             productCode: variant.productCode,
@@ -194,9 +200,7 @@ export default function EditProductForm({ product }: EditProductFormProps) {
       toast({
         title: "Error",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update product",
+          error instanceof Error ? error.message : "Failed to update product",
         variant: "destructive",
       });
     } finally {
@@ -317,6 +321,11 @@ export default function EditProductForm({ product }: EditProductFormProps) {
           onChange={(urls) => setImages(urls)}
           maxFiles={10}
         />
+      </div>
+
+      <div>
+        <Label>Manual PDF (optional)</Label>
+        <PDFUpload value={pdfUrl} onChange={setPdfUrl} />
       </div>
 
       <div className="space-y-4">

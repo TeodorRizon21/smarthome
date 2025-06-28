@@ -40,7 +40,13 @@ interface ProductWithVariants {
   colorVariants: ColorVariant[];
 }
 
-export default function AdminProductList() {
+interface AdminProductListProps {
+  searchTerm: string;
+}
+
+export default function AdminProductList({
+  searchTerm,
+}: AdminProductListProps) {
   const [products, setProducts] = useState<ProductWithVariants[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -68,6 +74,16 @@ export default function AdminProductList() {
       setIsLoading(false);
     }
   };
+
+  const filteredProducts = products.filter((product) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      product.colorVariants.some((variant) =>
+        variant.productCode.toLowerCase().includes(searchLower)
+      )
+    );
+  });
 
   const handleDeleteProduct = async (productId: string) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
@@ -120,7 +136,7 @@ export default function AdminProductList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <TableRow key={product.id} className="hover:bg-gray-50">
               <TableCell>
                 <div className="flex items-center space-x-4">
@@ -141,7 +157,9 @@ export default function AdminProductList() {
                 <div className="space-y-1">
                   <div className="font-medium">{product.category}</div>
                   {product.subcategory && (
-                    <div className="text-sm text-gray-500">{product.subcategory}</div>
+                    <div className="text-sm text-gray-500">
+                      {product.subcategory}
+                    </div>
                   )}
                 </div>
               </TableCell>
@@ -151,7 +169,9 @@ export default function AdminProductList() {
                     <div key={variant.id} className="text-sm">
                       <div className="font-medium">{variant.color}</div>
                       <div className="text-gray-500">{variant.productCode}</div>
-                      <div className="font-medium">${variant.price.toFixed(2)}</div>
+                      <div className="font-medium">
+                        ${variant.price.toFixed(2)}
+                      </div>
                     </div>
                   ))}
                 </div>

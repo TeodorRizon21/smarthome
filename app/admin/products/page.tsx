@@ -1,15 +1,42 @@
+"use client";
+
 import { redirect } from "next/navigation";
 import AdminProductList from "@/components/AdminProductList";
-import { isAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 
-export default async function AdminProductsPage() {
-  const adminStatus = await isAdmin();
+export default function AdminProductsPage() {
+  const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  if (!adminStatus) {
-    redirect("/");
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch("/api/admin/check-status");
+      const data = await response.json();
+
+      if (!data.isAdmin) {
+        redirect("/");
+      }
+
+      setAdminStatus(data.isAdmin);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      redirect("/");
+    }
+  };
+
+  if (adminStatus === null) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -33,8 +60,10 @@ export default async function AdminProductsPage() {
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search by product name or code..."
             className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <select className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20">
             <option value="">All Categories</option>
@@ -52,7 +81,7 @@ export default async function AdminProductsPage() {
       </div>
 
       {/* Products List */}
-      <AdminProductList />
+      <AdminProductList searchTerm={searchTerm} />
     </div>
   );
 }

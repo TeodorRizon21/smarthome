@@ -12,6 +12,7 @@ import type { Product } from "@/lib/types";
 import { CATEGORIES, VDP_SUBCATEGORIES } from "@/lib/categories";
 import { Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import PDFUpload from "@/components/PDFUpload";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,7 @@ export default function AdminPanel({ product }: AdminPanelProps) {
   const [name, setName] = useState(product?.name || "");
   const [description, setDescription] = useState(product?.description || "");
   const [images, setImages] = useState<string[]>(product?.images || []);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(product?.pdfUrl || null);
   const [category, setCategory] = useState<string>(
     product?.category || CATEGORIES.VIDEO_DOOR_PHONE
   );
@@ -146,7 +148,8 @@ export default function AdminPanel({ product }: AdminPanelProps) {
       if (!variant.productCode || !variant.color || !variant.price) {
         toast({
           title: "Error",
-          description: "All color variants must have a product code, color, and price",
+          description:
+            "All color variants must have a product code, color, and price",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -180,7 +183,9 @@ export default function AdminPanel({ product }: AdminPanelProps) {
             description,
             images,
             category,
-            subcategory: category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
+            subcategory:
+              category === CATEGORIES.VIDEO_DOOR_PHONE ? subcategory : null,
+            pdfUrl,
             colorVariants: colorVariants.map((variant) => ({
               id: variant.id,
               productCode: variant.productCode,
@@ -282,6 +287,11 @@ export default function AdminPanel({ product }: AdminPanelProps) {
           onChange={(urls) => setImages(urls)}
           maxFiles={10}
         />
+      </div>
+
+      <div>
+        <Label>Manual PDF (optional)</Label>
+        <PDFUpload value={pdfUrl} onChange={setPdfUrl} />
       </div>
 
       <div className="space-y-4">

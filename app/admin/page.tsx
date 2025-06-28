@@ -1,7 +1,9 @@
+"use client";
+
 import { redirect } from "next/navigation";
-import { isAdmin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Package,
   ShoppingBag,
@@ -13,11 +15,35 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-export default async function AdminPage() {
-  const adminStatus = await isAdmin();
+export default function AdminPage() {
+  const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
 
-  if (!adminStatus) {
-    redirect("/");
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch("/api/admin/check-status");
+      const data = await response.json();
+
+      if (!data.isAdmin) {
+        redirect("/");
+      }
+
+      setAdminStatus(data.isAdmin);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      redirect("/");
+    }
+  };
+
+  if (adminStatus === null) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -81,14 +107,18 @@ export default async function AdminPage() {
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
         <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
-            <Plus className="h-5 w-5 text-primary" />
-            <span className="font-medium">Add New Product</span>
-          </button>
-          <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
-            <Tag className="h-5 w-5 text-primary" />
-            <span className="font-medium">Create Discount</span>
-          </button>
+          <Link href="/admin/products/new">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
+              <Plus className="h-5 w-5 text-primary" />
+              <span className="font-medium">Add New Product</span>
+            </button>
+          </Link>
+          <Link href="/admin/discount">
+            <button className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors">
+              <Tag className="h-5 w-5 text-primary" />
+              <span className="font-medium">Create Discount</span>
+            </button>
+          </Link>
         </div>
       </div>
 

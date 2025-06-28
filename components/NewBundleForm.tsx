@@ -28,7 +28,6 @@ interface Product {
   description: string;
   price: number;
   images: string[];
-  stock: number;
 }
 
 interface BundleItem {
@@ -198,8 +197,6 @@ export default function NewBundleForm() {
         description: bundle.description,
         price: parseFloat(bundle.price),
         oldPrice: bundle.oldPrice ? parseFloat(bundle.oldPrice) : null,
-        stock: 100, // Valoare implicită
-        allowOutOfStock: true, // Valoare implicită
         images,
         items: selectedProducts.map((item) => ({
           productId: item.productId,
