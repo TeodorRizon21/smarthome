@@ -162,7 +162,7 @@ export async function GET(request: Request) {
       name: string, 
       totalSales: number, 
       totalRevenue: number,
-      category: string 
+      category: string | null
     }>()
     
     orders.forEach((order) => {

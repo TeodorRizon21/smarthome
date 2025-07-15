@@ -203,18 +203,11 @@ export default function BundlesPage() {
 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">
-                    {bundle.stock > 0 ? (
-                      <span className="text-green-600">În stoc</span>
-                    ) : bundle.allowOutOfStock ? (
-                      "Disponibil la comandă"
-                    ) : (
-                      <span className="text-red-600">Stoc epuizat</span>
-                    )}
+                    {/* Eliminat statusul de stoc */}
                   </span>
 
                   <Button
                     size="sm"
-                    disabled={bundle.stock === 0 && !bundle.allowOutOfStock}
                     onClick={(e) => handleAddToCart(bundle, e)}
                   >
                     <ShoppingCart className="h-4 w-4 mr-1" />

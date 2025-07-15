@@ -74,7 +74,7 @@ export default async function ProductPage({
     notFound();
   }
 
-  const otherProducts = await getOtherProducts(params.id, product.category);
+  const otherProducts = await getOtherProducts(params.id, product.category || "Uncategorized");
 
   return (
     <div className="space-y-16 mb-16 pt-24">
@@ -82,7 +82,7 @@ export default async function ProductPage({
       <RelatedProducts
         products={otherProducts}
         currentProductId={params.id}
-        category={product.category}
+        category={product.category || "Uncategorized"}
       />
     </div>
   );

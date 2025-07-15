@@ -37,7 +37,7 @@ export async function POST(
        for (const item of currentOrder.items) {
          // Note: Stock management is not implemented in the current schema
          // This would need to be added to the ColorVariant model if needed
-         console.log(`Would reduce stock for product ${item.productId}, color: ${item.size}, quantity: ${item.quantity}`)
+         console.log(`Would reduce stock for product ${item.productId}, color: ${item.color}, quantity: ${item.quantity}`)
        }
      }
 

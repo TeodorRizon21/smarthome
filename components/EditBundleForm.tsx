@@ -28,7 +28,7 @@ interface Product {
   description: string;
   price: number;
   images: string[];
-  stock: number;
+  stock?: number;
 }
 
 interface BundleItemWithProduct {
@@ -51,9 +51,7 @@ interface Bundle {
   price: number;
   oldPrice: number | null;
   images: string[];
-  stock: number;
   discount: number | null;
-  allowOutOfStock: boolean;
   items: BundleItemWithProduct[];
 }
 
@@ -235,8 +233,6 @@ export default function EditBundleForm({
         description: bundle.description,
         price: parseFloat(bundle.price),
         oldPrice: bundle.oldPrice ? parseFloat(bundle.oldPrice) : null,
-        stock: initialBundle.stock, // Păstrăm valoarea originală
-        allowOutOfStock: initialBundle.allowOutOfStock, // Păstrăm valoarea originală
         images,
         items: selectedProducts.map((item) => ({
           productId: item.productId,

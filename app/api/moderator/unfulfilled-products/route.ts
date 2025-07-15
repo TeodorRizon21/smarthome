@@ -15,6 +15,7 @@ interface Product {
   id: string;
   name: string;
   images: string[];
+
   colorVariants: {
     id: string;
     color: string;
@@ -22,12 +23,15 @@ interface Product {
     oldPrice: number | null;
     productCode: string;
   }[];
+
 }
 
 interface OrderItem {
   id: string;
   product: Product;
+
   color: string;
+
   quantity: number;
 }
 
@@ -58,12 +62,12 @@ interface OrderDetails {
   postalCode: string;
   country: string;
   isCompany: boolean;
-  companyName?: string;
-  companyCUI?: string;
-  companyRegNumber?: string;
-  companyAddress?: string;
-  companyCity?: string;
-  companyCounty?: string;
+  companyName?: string | null;
+  companyCUI?: string | null;
+  companyRegNumber?: string | null;
+  companyAddress?: string | null;
+  companyCity?: string | null;
+  companyCounty?: string | null;
 }
 
 interface UnfulfilledOrder {
@@ -108,8 +112,10 @@ export async function GET() {
               select: {
                 id: true,
                 name: true,
+
                 images: true,
                 colorVariants: true
+
               }
             }
           }
@@ -124,8 +130,10 @@ export async function GET() {
                       select: {
                         id: true,
                         name: true,
+
                         images: true,
                         colorVariants: true
+
                       }
                     }
                   }
@@ -136,7 +144,7 @@ export async function GET() {
         },
         details: true
       }
-    }) as UnfulfilledOrder[];
+    });
 
     // Structura pentru a ține evidența produselor necesare
     type ProductNeed = {
@@ -145,7 +153,9 @@ export async function GET() {
       color: string;
       quantity: number;
       image: string;
+
       productCode: string | null;
+
     };
 
     // Obiect pentru a ține evidența produselor și a cantităților
@@ -159,6 +169,7 @@ export async function GET() {
     unfulfilledOrders.forEach((order: UnfulfilledOrder) => {
       // Verificăm produsele individuale
       order.items.forEach((item: UnfulfilledOrderItem) => {
+
         const key = `${item.product.id}_${item.color}`;
         const colorVariant = item.product.colorVariants?.find(v => v.color === item.color);
         
@@ -168,10 +179,12 @@ export async function GET() {
           productNeeds[key] = {
             productId: item.product.id,
             productName: item.product.name,
+
             color: item.color,
             quantity: item.quantity,
             image: item.product.images?.[0] || '/placeholder.svg',
             productCode: colorVariant?.productCode || null
+
           };
         }
       });
@@ -179,10 +192,12 @@ export async function GET() {
       // Verificăm produsele din bundle-uri
       order.BundleOrder.forEach((bundleOrder: UnfulfilledBundleOrder) => {
         bundleOrder.bundle.items.forEach((bundleItem: UnfulfilledBundleItem) => {
+
           // Pentru bundle-uri, vom folosi prima variantă de culoare disponibilă
           const colorVariant = bundleItem.product.colorVariants?.[0];
           const key = `${bundleItem.product.id}_${colorVariant?.color || 'default'}`;
           
+
           if (productNeeds[key]) {
             productNeeds[key].quantity += bundleItem.quantity * bundleOrder.quantity;
           } else {
@@ -192,7 +207,9 @@ export async function GET() {
               color: colorVariant?.color || 'default',
               quantity: bundleItem.quantity * bundleOrder.quantity,
               image: bundleItem.product.images?.[0] || '/placeholder.svg',
+
               productCode: colorVariant?.productCode || null
+
             };
           }
         });
@@ -208,6 +225,7 @@ export async function GET() {
         id: item.id,
         productId: item.product.id,
         productName: item.product.name,
+
         color: item.color,
         quantity: item.quantity,
         image: item.product.images?.[0] || '/placeholder.svg',
@@ -227,6 +245,7 @@ export async function GET() {
             productCode: colorVariant?.productCode || null
           };
         })
+
       );
 
       return {
@@ -234,8 +253,10 @@ export async function GET() {
         orderNumber: order.orderNumber,
         createdAt: order.createdAt,
         orderStatus: order.orderStatus,
+
         paymentStatus: order.paymentStatus,
         paymentType: order.paymentType,
+
         courier: order.courier,
         awb: order.awb,
         total: order.total,

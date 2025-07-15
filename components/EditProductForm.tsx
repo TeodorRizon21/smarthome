@@ -47,7 +47,7 @@ export default function EditProductForm({ product }: EditProductFormProps) {
   const [description, setDescription] = useState(product.description);
   const [images, setImages] = useState<string[]>(product.images);
   const [pdfUrl, setPdfUrl] = useState<string | null>(product.pdfUrl || null);
-  const [category, setCategory] = useState<string>(product.category);
+  const [category, setCategory] = useState<string>((product.category ?? "Uncategorized"));
   const [subcategory, setSubcategory] = useState<string>(
     product.subcategory || ""
   );
