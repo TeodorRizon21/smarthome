@@ -26,7 +26,7 @@ interface OrderItem {
   id: string;
   productId: string;
   quantity: number;
-  size: string;
+  size?: string;
   price: number;
   product: {
     id: string;
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
         productId: item.product.id,
         productName: item.product.name,
         quantity: item.quantity,
-        color: item.size,
+        color: item.size ?? 'N/A',
         price: item.price,
         image: item.product.images[0] || '/placeholder.svg'
       })),

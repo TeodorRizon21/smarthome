@@ -15,14 +15,12 @@ interface Product {
   id: string;
   name: string;
   images: string[];
-  stock: number;
-  sizeVariants: SizeVariant[];
 }
 
 interface OrderItem {
   id: string;
   product: Product;
-  size: string;
+  size?: string;
   quantity: number;
 }
 
@@ -53,12 +51,12 @@ interface OrderDetails {
   postalCode: string;
   country: string;
   isCompany: boolean;
-  companyName?: string;
-  companyCUI?: string;
-  companyRegNumber?: string;
-  companyAddress?: string;
-  companyCity?: string;
-  companyCounty?: string;
+  companyName?: string | null;
+  companyCUI?: string | null;
+  companyRegNumber?: string | null;
+  companyAddress?: string | null;
+  companyCity?: string | null;
+  companyCounty?: string | null;
 }
 
 interface UnfulfilledOrder {
@@ -92,9 +90,7 @@ export async function GET() {
               select: {
                 id: true,
                 name: true,
-                images: true,
-                stock: true,
-                sizeVariants: true
+                images: true
               }
             }
           }
@@ -109,9 +105,7 @@ export async function GET() {
                       select: {
                         id: true,
                         name: true,
-                        images: true,
-                        stock: true,
-                        sizeVariants: true
+                        images: true
                       }
                     }
                   }
@@ -122,7 +116,7 @@ export async function GET() {
         },
         details: true
       }
-    }) as UnfulfilledOrder[];
+    });
 
     // Structura pentru a ține evidența produselor necesare
     type ProductNeed = {
@@ -131,8 +125,6 @@ export async function GET() {
       size: string;
       quantity: number;
       image: string;
-      stock: number;
-      sizeStock: number | null;
     };
 
     // Obiect pentru a ține evidența produselor și a cantităților
@@ -146,20 +138,16 @@ export async function GET() {
     unfulfilledOrders.forEach((order: UnfulfilledOrder) => {
       // Verificăm produsele individuale
       order.items.forEach((item: UnfulfilledOrderItem) => {
-        const key = `${item.product.id}_${item.size}`;
-        const sizeVariant = item.product.sizeVariants?.find((v: SizeVariant) => v.size === item.size);
-        
+        const key = `${item.product.id}_${item.size ?? 'N/A'}`;
         if (productNeeds[key]) {
           productNeeds[key].quantity += item.quantity;
         } else {
           productNeeds[key] = {
             productId: item.product.id,
             productName: item.product.name,
-            size: item.size,
+            size: item.size ?? 'N/A',
             quantity: item.quantity,
             image: item.product.images?.[0] || '/placeholder.svg',
-            stock: item.product.stock,
-            sizeStock: sizeVariant ? sizeVariant.stock : null
           };
         }
       });
@@ -170,7 +158,6 @@ export async function GET() {
           // Pentru simplificare, produsele din bundle nu au specificată mărimea
           // Vom folosi "N/A" ca mărime pentru ele
           const key = `${bundleItem.product.id}_N/A`;
-          
           if (productNeeds[key]) {
             productNeeds[key].quantity += bundleItem.quantity * bundleOrder.quantity;
           } else {
@@ -180,8 +167,6 @@ export async function GET() {
               size: 'N/A',
               quantity: bundleItem.quantity * bundleOrder.quantity,
               image: bundleItem.product.images?.[0] || '/placeholder.svg',
-              stock: bundleItem.product.stock,
-              sizeStock: null
             };
           }
         });
@@ -197,14 +182,10 @@ export async function GET() {
         id: item.id,
         productId: item.product.id,
         productName: item.product.name,
-        size: item.size,
+        size: item.size ?? 'N/A',
         quantity: item.quantity,
         image: item.product.images?.[0] || '/placeholder.svg',
-        inStock: (() => {
-          const sizeVariant = item.product.sizeVariants?.find((v: SizeVariant) => v.size === item.size);
-          const stock = sizeVariant ? sizeVariant.stock : item.product.stock;
-          return stock >= item.quantity;
-        })()
+        inStock: true // Nu mai calculăm stocul
       }));
 
       const bundleProducts = order.BundleOrder.flatMap((bundleOrder: UnfulfilledBundleOrder) =>
@@ -215,7 +196,7 @@ export async function GET() {
           size: 'N/A',
           quantity: bundleItem.quantity * bundleOrder.quantity,
           image: bundleItem.product.images?.[0] || '/placeholder.svg',
-          inStock: bundleItem.product.stock >= (bundleItem.quantity * bundleOrder.quantity)
+          inStock: true // Nu mai calculăm stocul
         }))
       );
 
@@ -231,7 +212,7 @@ export async function GET() {
         orderStatus: order.orderStatus,
         total: order.total,
         products: [...orderProducts, ...bundleProducts],
-        allProductsInStock: [...orderProducts, ...bundleProducts].every(product => product.inStock),
+        allProductsInStock: true, // Nu mai calculăm stocul
         courier: order.courier,
         awb: order.awb,
         details: order.details.isCompany ? {

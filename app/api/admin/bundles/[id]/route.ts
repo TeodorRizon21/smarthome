@@ -64,7 +64,7 @@ export async function PUT(
 
     const bundleId = params.id;
     const body = await request.json();
-    const { name, description, price, oldPrice, stock, discount, allowOutOfStock, images, items } = body;
+    const { name, description, price, oldPrice, discount, images, items } = body;
 
     if (!name || !description || items.length === 0 || images.length === 0) {
       return NextResponse.json(
@@ -114,9 +114,7 @@ export async function PUT(
         description,
         price,
         oldPrice,
-        stock,
         discount,
-        allowOutOfStock,
         images,
         items: {
           deleteMany: {}, // Ștergem toate item-urile existente

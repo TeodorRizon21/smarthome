@@ -229,22 +229,13 @@ export default function BundlePage({ params }: BundlePageProps) {
           <div className="space-y-4">
             <Button
               className="w-full py-6 text-lg"
-              disabled={bundle.stock === 0 && !bundle.allowOutOfStock}
               onClick={handleAddToCart}
             >
               <ShoppingCart className="h-5 w-5 mr-2" />
               Adaugă în coș
             </Button>
 
-            <div className="text-sm text-gray-500 mt-2">
-              {bundle.stock > 0 ? (
-                <p className="text-green-600">În stoc</p>
-              ) : bundle.allowOutOfStock ? (
-                <p>Disponibil la comandă</p>
-              ) : (
-                <p className="text-red-600">Stoc epuizat</p>
-              )}
-            </div>
+            {/* Eliminat statusul de stoc */}
           </div>
         </div>
       </div>

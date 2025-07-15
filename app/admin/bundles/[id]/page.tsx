@@ -211,6 +211,7 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
           </Card>
 
           {/* Preț și Stoc */}
+          {/* Această secțiune a fost eliminată pentru că nu mai gestionăm stocul la bundle-uri */}
           <Card>
             <CardHeader>
               <CardTitle>Preț și Stoc</CardTitle>
@@ -254,57 +255,6 @@ export default async function ViewBundlePage({ params }: ViewBundlePageProps) {
                       ${(totalProductsPrice - bundle.price).toFixed(2)}
                     </span>
                   </div>
-                </div>
-
-                <div className="flex justify-between items-center border-t pt-4">
-                  <span className="text-gray-500">Stoc</span>
-                  <div>
-                    <span className="font-medium">
-                      {bundle.stock} disponibile
-                    </span>
-                    <div className="mt-1">
-                      {bundle.stock === 0 && !bundle.allowOutOfStock ? (
-                        <Badge
-                          className={cn(
-                            "bg-red-100 text-red-700"
-                          )}
-                        >
-                          Stoc Epuizat
-                        </Badge>
-                      ) : bundle.stock <= 5 ? (
-                        <Badge
-                          className={cn(
-                            "bg-yellow-100 text-yellow-700"
-                          )}
-                        >
-                          Stoc Limitat
-                        </Badge>
-                      ) : (
-                        <Badge
-                          className={cn(
-                            "bg-green-100 text-green-700"
-                          )}
-                        >
-                          În Stoc
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center border-t pt-4">
-                  <span className="text-gray-500">
-                    Permite Vânzare Fără Stoc
-                  </span>
-                  <Badge
-                    className={cn(
-                      bundle.allowOutOfStock
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
-                    )}
-                  >
-                    {bundle.allowOutOfStock ? "Da" : "Nu"}
-                  </Badge>
                 </div>
               </div>
             </CardContent>
