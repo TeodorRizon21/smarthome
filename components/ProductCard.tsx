@@ -110,52 +110,54 @@ export default function ProductCard({
         )}
 
         {/* Image Container */}
-        <div className="relative h-[250px] w-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
+        <div className="relative aspect-square w-full bg-[#1a1a1a] overflow-hidden flex-shrink-0">
           <Image
             src={product.images[0] || `/api/placeholder?width=250&height=250`}
             alt={product.name}
             fill
-            sizes="250px"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-opacity duration-300"
           />
           {/* Description Overlay */}
           <div className="absolute inset-0 p-4 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/70" />
-            <p className="text-white text-center text-xs leading-relaxed relative z-10 line-clamp-6">
+            <p className="text-white text-center text-sm leading-relaxed relative z-10 line-clamp-6">
               {product.description || "Fără descriere disponibilă"}
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4 flex flex-col flex-grow">
-          <h3 className="text-lg font-bold mb-2 truncate">{product.name}</h3>
+        <div className="flex flex-col flex-grow p-4">
+          <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+            {product.name}
+          </h3>
 
           {/* Color Variants */}
-          <div className="relative mb-auto">
+          <div className="relative flex-grow">
             <div
               ref={variantsContainerRef}
-              className="flex gap-1.5 overflow-x-auto scrollbar-hide scroll-smooth"
+              className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
               onScroll={checkScroll}
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {product.colorVariants.map((variant) => (
+              {product.colorVariants?.map((variant) => (
                 <button
-                  key={variant.id}
+                  key={variant.color}
                   onClick={(e) => {
                     e.preventDefault();
                     setSelectedVariant(variant);
                   }}
-                  className={`px-2 py-0.5 text-xs rounded-full border transition-colors duration-200 flex-shrink-0 ${
-                    selectedVariant?.id === variant.id
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-black border-gray-200 hover:border-black"
+                  className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    selectedVariant?.color === variant.color
+                      ? "bg-[#29b4b9] text-black"
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                   }`}
                 >
                   {variant.color}
                 </button>
               ))}
             </div>
+
             {showNavigation && (
               <>
                 {canScrollLeft && (
@@ -184,7 +186,8 @@ export default function ProductCard({
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-3">
+          {/* Price and Add to Cart */}
+          <div className="flex items-center justify-between mt-4">
             <div className="flex items-baseline gap-1">
               <p
                 className={`text-xl font-bold ${
@@ -202,7 +205,7 @@ export default function ProductCard({
 
             <button
               onClick={handleAddToCart}
-              className="bg-[#29b4b9] p-3 rounded-xl hover:bg-[#4adde4] transition-colors duration-300"
+              className="bg-[#29b4b9] p-2.5 rounded-xl hover:bg-[#4adde4] transition-colors duration-300"
             >
               <ShoppingCart className="w-5 h-5 text-black" />
             </button>

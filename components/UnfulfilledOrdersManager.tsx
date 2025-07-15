@@ -39,8 +39,7 @@ type ProductNeed = {
   color: string;
   quantity: number;
   image: string;
-  stock: number;
-  colorStock: number | null;
+  productCode: string | null;
 };
 
 type OrderProduct = {
@@ -50,34 +49,41 @@ type OrderProduct = {
   color: string;
   quantity: number;
   image: string;
-  inStock: boolean;
+  productCode: string | null;
+};
+
+type OrderDetails = {
+  id: string;
+  userId?: string | null;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  county: string;
+  postalCode: string;
+  country: string;
+  isCompany: boolean;
+  companyName?: string;
+  companyCUI?: string;
+  companyRegNumber?: string;
+  companyAddress?: string;
+  companyCity?: string;
+  companyCounty?: string;
 };
 
 type Order = {
   id: string;
   orderNumber: string;
   createdAt: Date;
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-  };
   orderStatus: string;
+  paymentStatus: string;
+  paymentType: string;
   total: number;
   products: OrderProduct[];
-  allProductsInStock: boolean;
   courier: string | null;
   awb: string | null;
-  details?: {
-    isCompany: boolean;
-    companyName: string;
-    companyCUI: string;
-    companyRegNumber: string;
-    companyAddress: string;
-    companyCity: string;
-    companyCounty: string;
-  };
+  details: OrderDetails;
 };
 
 export default function UnfulfilledOrdersManager() {
@@ -292,69 +298,46 @@ export default function UnfulfilledOrdersManager() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Secțiunea de produse necesare */}
       <Card>
         <CardHeader>
-          <CardTitle>Produse necesare pentru comenzile nelivrate</CardTitle>
+          <CardTitle>Produse necesare pentru comenzi nelivrate</CardTitle>
           <CardDescription>
-            Lista de produse necesare pentru a completa toate comenzile în
-            așteptare
+            Lista tuturor produselor necesare pentru comenzile în așteptare
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {orderStatuses.length > 0 && (
-              <div className="bg-amber-50 p-4 rounded mb-4 text-sm">
-                <strong>Statusuri de comenzi disponibile:</strong>{" "}
-                {orderStatuses.join(", ")}
+            {productNeeds.map((product) => (
+              <div
+                key={`${product.productId}_${product.color}`}
+                className="flex items-center space-x-4"
+              >
+                <div className="relative h-16 w-16">
+                  <Image
+                    src={product.image}
+                    alt={product.productName}
+                    fill
+                    className="object-cover rounded-md"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">{product.productName}</h4>
+                    <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100">
+                      Cod produs: {product.productCode || "N/A"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Culoare: {product.color}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Cantitate necesară: {product.quantity}
+                  </div>
+                </div>
               </div>
-            )}
-
-            {productNeeds.length === 0 ? (
-              <p className="text-muted-foreground">
-                Nu există produse necesare pentru comenzile în așteptare.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {productNeeds.map((product) => (
-                  <Card
-                    key={`${product.productId}_${product.color}`}
-                    className="overflow-hidden"
-                  >
-                    <div className="flex items-center p-4">
-                      <div className="relative h-14 w-14 rounded-md overflow-hidden mr-4">
-                        <Image
-                          src={product.image}
-                          alt={product.productName}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-sm">
-                          {product.productName}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          Color: {product.color}
-                        </p>
-                        <div className="mt-1 flex items-center">
-                          <span className="text-sm font-semibold">
-                            {product.quantity} buc. necesare
-                          </span>
-                          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100">
-                            Stoc:{" "}
-                            {product.colorStock !== null
-                              ? product.colorStock
-                              : product.stock}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -362,57 +345,150 @@ export default function UnfulfilledOrdersManager() {
       {/* Secțiunea de comenzi nelivrate */}
       <Card>
         <CardHeader>
-          <CardTitle>Comenzi în așteptare</CardTitle>
+          <CardTitle>Comenzi nelivrate</CardTitle>
           <CardDescription>
-            Gestionează comenzile care necesită procesare și livrare
+            Gestionează comenzile care așteaptă să fie livrate
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {orders.length === 0 ? (
-              <p className="text-muted-foreground">
-                Nu există comenzi în așteptare.
-              </p>
-            ) : (
-              <div className="flex flex-col space-y-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="border rounded-lg p-4">
+          <Accordion type="single" collapsible className="w-full">
+            {orders.map((order) => (
+              <AccordionItem key={order.id} value={order.id}>
+                <AccordionTrigger>
+                  <div className="flex justify-between items-center w-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold">
-                        Order {order.orderNumber}
+                        Comanda #{order.orderNumber}
                       </h3>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 ml-4">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full text-left">
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4">
+                    {/* Detalii client */}
+                    <div>
+                      <span className="font-medium">
+                        {order.details.fullName}
+                      </span>
+                      <p className="text-xs text-muted-foreground">
+                        Email: {order.details.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Telefon: {order.details.phoneNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Adresă:{" "}
+                        {`${order.details.street}, ${order.details.city}, ${order.details.county}, ${order.details.postalCode}`}
+                      </p>
+                      {order.details.isCompany && (
+                        <>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Companie: {order.details.companyName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            CUI: {order.details.companyCUI}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Nr. Reg. Com.: {order.details.companyRegNumber}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Adresă firmă:{" "}
+                            {`${order.details.companyAddress}, ${order.details.companyCity}, ${order.details.companyCounty}`}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Produse */}
+                    <div className="space-y-4">
+                      {order.products.map((product) => (
+                        <div
+                          key={product.id}
+                          className="flex items-center space-x-4"
+                        >
+                          <Checkbox
+                            id={`${order.id}_${product.id}`}
+                            checked={
+                              checkedProductsPerOrder[order.id]?.[product.id] ||
+                              false
+                            }
+                            onCheckedChange={(checked) =>
+                              handleProductCheck(
+                                order.id,
+                                product.id,
+                                checked as boolean
+                              )
+                            }
+                          />
+                          <div className="relative h-16 w-16">
+                            <Image
+                              src={product.image}
+                              alt={product.productName}
+                              fill
+                              className="object-cover rounded-md"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">
+                                {product.productName}
+                              </h4>
+                              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100">
+                                Cod produs: {product.productCode || "N/A"}
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Culoare: {product.color}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Cantitate: {product.quantity}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Separator />
+
+                    {/* Status și acțiuni */}
+                    <div className="flex justify-between items-center">
                       <div>
-                        <span className="font-medium">
-                          {order.customer.name}
-                        </span>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleDateString(
-                            "ro-RO"
-                          )}{" "}
-                          - {order.products.length} produse
+                        <p className="text-sm">
+                          Status comandă: {order.orderStatus}
+                        </p>
+                        <p className="text-sm">
+                          Status plată: {order.paymentStatus}
+                        </p>
+                        <p className="text-sm">
+                          Metodă plată: {order.paymentType}
+                        </p>
+                        <p className="text-sm font-medium">
+                          Total: {order.total.toFixed(2)} RON
                         </p>
                       </div>
-                      <div className="text-right mt-2 sm:mt-0">
-                        <span className="font-medium">
-                          {order.total.toFixed(2)} RON
-                        </span>
-                        <p className="text-xs">{order.orderStatus}</p>
+                      <div className="space-x-2">
+                        <Button
+                          onClick={() => openShippingDialog(order)}
+                          disabled={!areAllProductsChecked(order.id)}
+                        >
+                          Adaugă AWB
+                        </Button>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </CardContent>
       </Card>
 
-      {/* Dialog pentru adăugarea detaliilor de livrare */}
+      {/* Dialog pentru detalii de livrare */}
       <AlertDialog
         open={showShippingDialog}
         onOpenChange={setShowShippingDialog}

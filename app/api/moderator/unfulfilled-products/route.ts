@@ -15,12 +15,23 @@ interface Product {
   id: string;
   name: string;
   images: string[];
+
+  colorVariants: {
+    id: string;
+    color: string;
+    price: number;
+    oldPrice: number | null;
+    productCode: string;
+  }[];
+
 }
 
 interface OrderItem {
   id: string;
   product: Product;
-  size?: string;
+
+  color: string;
+
   quantity: number;
 }
 
@@ -61,6 +72,7 @@ interface OrderDetails {
 
 interface UnfulfilledOrder {
   id: string;
+  orderNumber: string;
   userId: string | null;
   total: number;
   paymentStatus: string;
@@ -83,14 +95,27 @@ export async function GET() {
           not: 'Comanda finalizata!'
         }
       },
-      include: {
+      select: {
+        id: true,
+        orderNumber: true,
+        userId: true,
+        total: true,
+        paymentStatus: true,
+        orderStatus: true,
+        paymentType: true,
+        courier: true,
+        awb: true,
+        createdAt: true,
         items: {
           include: {
             product: {
               select: {
                 id: true,
                 name: true,
-                images: true
+
+                images: true,
+                colorVariants: true
+
               }
             }
           }
@@ -105,7 +130,10 @@ export async function GET() {
                       select: {
                         id: true,
                         name: true,
-                        images: true
+
+                        images: true,
+                        colorVariants: true
+
                       }
                     }
                   }
@@ -122,9 +150,12 @@ export async function GET() {
     type ProductNeed = {
       productId: string;
       productName: string;
-      size: string;
+      color: string;
       quantity: number;
       image: string;
+
+      productCode: string | null;
+
     };
 
     // Obiect pentru a ține evidența produselor și a cantităților
@@ -138,16 +169,22 @@ export async function GET() {
     unfulfilledOrders.forEach((order: UnfulfilledOrder) => {
       // Verificăm produsele individuale
       order.items.forEach((item: UnfulfilledOrderItem) => {
-        const key = `${item.product.id}_${item.size ?? 'N/A'}`;
+
+        const key = `${item.product.id}_${item.color}`;
+        const colorVariant = item.product.colorVariants?.find(v => v.color === item.color);
+        
         if (productNeeds[key]) {
           productNeeds[key].quantity += item.quantity;
         } else {
           productNeeds[key] = {
             productId: item.product.id,
             productName: item.product.name,
-            size: item.size ?? 'N/A',
+
+            color: item.color,
             quantity: item.quantity,
             image: item.product.images?.[0] || '/placeholder.svg',
+            productCode: colorVariant?.productCode || null
+
           };
         }
       });
@@ -155,18 +192,24 @@ export async function GET() {
       // Verificăm produsele din bundle-uri
       order.BundleOrder.forEach((bundleOrder: UnfulfilledBundleOrder) => {
         bundleOrder.bundle.items.forEach((bundleItem: UnfulfilledBundleItem) => {
-          // Pentru simplificare, produsele din bundle nu au specificată mărimea
-          // Vom folosi "N/A" ca mărime pentru ele
-          const key = `${bundleItem.product.id}_N/A`;
+
+          // Pentru bundle-uri, vom folosi prima variantă de culoare disponibilă
+          const colorVariant = bundleItem.product.colorVariants?.[0];
+          const key = `${bundleItem.product.id}_${colorVariant?.color || 'default'}`;
+          
+
           if (productNeeds[key]) {
             productNeeds[key].quantity += bundleItem.quantity * bundleOrder.quantity;
           } else {
             productNeeds[key] = {
               productId: bundleItem.product.id,
               productName: bundleItem.product.name,
-              size: 'N/A',
+              color: colorVariant?.color || 'default',
               quantity: bundleItem.quantity * bundleOrder.quantity,
               image: bundleItem.product.images?.[0] || '/placeholder.svg',
+
+              productCode: colorVariant?.productCode || null
+
             };
           }
         });
@@ -182,48 +225,43 @@ export async function GET() {
         id: item.id,
         productId: item.product.id,
         productName: item.product.name,
-        size: item.size ?? 'N/A',
+
+        color: item.color,
         quantity: item.quantity,
         image: item.product.images?.[0] || '/placeholder.svg',
-        inStock: true // Nu mai calculăm stocul
+        productCode: item.product.colorVariants?.find(v => v.color === item.color)?.productCode || null
       }));
 
       const bundleProducts = order.BundleOrder.flatMap((bundleOrder: UnfulfilledBundleOrder) =>
-        bundleOrder.bundle.items.map((bundleItem: UnfulfilledBundleItem) => ({
-          id: bundleItem.id,
-          productId: bundleItem.product.id,
-          productName: bundleItem.product.name,
-          size: 'N/A',
-          quantity: bundleItem.quantity * bundleOrder.quantity,
-          image: bundleItem.product.images?.[0] || '/placeholder.svg',
-          inStock: true // Nu mai calculăm stocul
-        }))
+        bundleOrder.bundle.items.map((bundleItem: UnfulfilledBundleItem) => {
+          const colorVariant = bundleItem.product.colorVariants?.[0];
+          return {
+            id: bundleItem.id,
+            productId: bundleItem.product.id,
+            productName: bundleItem.product.name,
+            color: colorVariant?.color || 'default',
+            quantity: bundleItem.quantity * bundleOrder.quantity,
+            image: bundleItem.product.images?.[0] || '/placeholder.svg',
+            productCode: colorVariant?.productCode || null
+          };
+        })
+
       );
 
       return {
         id: order.id,
+        orderNumber: order.orderNumber,
         createdAt: order.createdAt,
-        customer: {
-          name: order.details.fullName,
-          email: order.details.email,
-          phone: order.details.phoneNumber,
-          address: `${order.details.street}, ${order.details.city}, ${order.details.county}, ${order.details.postalCode}`
-        },
         orderStatus: order.orderStatus,
-        total: order.total,
-        products: [...orderProducts, ...bundleProducts],
-        allProductsInStock: true, // Nu mai calculăm stocul
+
+        paymentStatus: order.paymentStatus,
+        paymentType: order.paymentType,
+
         courier: order.courier,
         awb: order.awb,
-        details: order.details.isCompany ? {
-          isCompany: order.details.isCompany,
-          companyName: order.details.companyName,
-          companyCUI: order.details.companyCUI,
-          companyRegNumber: order.details.companyRegNumber,
-          companyAddress: order.details.companyAddress,
-          companyCity: order.details.companyCity,
-          companyCounty: order.details.companyCounty
-        } : undefined
+        total: order.total,
+        details: order.details,
+        products: [...orderProducts, ...bundleProducts]
       };
     });
 
@@ -234,7 +272,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching unfulfilled products:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch unfulfilled products' },
+      { error: 'Error fetching unfulfilled products' },
       { status: 500 }
     );
   }

@@ -77,7 +77,7 @@ export default async function ProductPage({
   const otherProducts = await getOtherProducts(params.id, product.category || "Uncategorized");
 
   return (
-    <div className="space-y-16 mb-16">
+    <div className="space-y-16 mb-16 pt-24">
       <ProductDetails product={product} initialColor={searchParams.color} />
       <RelatedProducts
         products={otherProducts}
