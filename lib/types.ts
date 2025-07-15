@@ -14,7 +14,7 @@ export interface Product {
   name: string;
   description: string;
   images: string[];
-  category: string; // "Video Door Phone", "Home and Building Control System", "SALE"
+  category?: string | null; // "Video Door Phone", "Home and Building Control System", "SALE"
   subcategory: string | null; // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   price: number;
   oldPrice?: number | null;
