@@ -14,7 +14,7 @@ model Product {
   price             Float
   oldPrice          Float?
   images            String[]
-  category          String        // "Video Door Phone", "Home and Building Control System", "SALE"
+  category          String?       // "Video Door Phone", "Home and Building Control System", "SALE"
   subcategory       String?       // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   pdfUrl            String? // URL-ul către PDF-ul produsului
   tags              String[]     @default([])
