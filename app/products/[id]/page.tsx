@@ -4,9 +4,8 @@ import ProductDetails from "@/components/ProductDetails";
 import RelatedProducts from "@/components/RelatedProducts";
 import { ProductWithVariants } from "@/lib/types";
 
-// Dezactivăm caching-ul static pentru această pagină
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Pagină de produs cu ISR pentru a reduce apelurile la bază și consumul de CPU
+export const revalidate = 600; // 10 minute
 
 async function getProduct(id: string): Promise<ProductWithVariants | null> {
   try {

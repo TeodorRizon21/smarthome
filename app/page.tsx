@@ -4,36 +4,24 @@ import Newsletter from "@/components/Newsletter";
 import { prisma } from "@/lib/prisma";
 import BundleShowcase from "@/components/BundleShowcase";
 import InstallationShowcase from "@/components/InstallationShowcase";
-import type { ProductWithVariants, Product, ColorVariant } from "@/lib/types";
+import type { ProductWithVariants, ColorVariant } from "@/lib/types";
 
-// Dezactivăm cache-ul static pentru această pagină
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Facem pagina home statică cu revalidare periodică pentru a reduce consumul de CPU
+export const revalidate = 600; // 10 minute
 
 async function getProducts(): Promise<ProductWithVariants[]> {
   try {
-    // First, get the total count of products
-    const count = await prisma.product.count();
-
-    // Generate a random skip value
-    const skip = Math.max(
-      0,
-      Math.floor(Math.random() * Math.max(0, count - 12))
-    );
-
     const products = await prisma.product.findMany({
       include: {
         colorVariants: true,
       },
-      skip: skip,
+      orderBy: {
+        createdAt: "desc",
+      },
       take: 12,
     });
 
-    // Shuffle the products array
-    const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
-
-    return shuffledProducts.map((product) => {
-      // Calculate aggregate values from colorVariants
+    return products.map((product) => {
       const minVariant = product.colorVariants.reduce(
         (min: ColorVariant | null, variant: ColorVariant) =>
           !min || variant.price < min.price ? variant : min,
