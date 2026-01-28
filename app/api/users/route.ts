@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/auth";
-import { User, EmailAddress, clerkClient as clerk } from "@clerk/nextjs/server";
+import { Clerk } from "@clerk/clerk-sdk-node";
+
+const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +31,7 @@ export async function GET(request: Request) {
     console.log("Fetching users using Clerk SDK...");
 
     try {
-      const usersResponse = await clerk.users.getUserList({
+      const usersResponse = await clerkClient.users.getUserList({
         limit: limit,
         offset: offset,
       });
@@ -37,11 +39,11 @@ export async function GET(request: Request) {
       console.log("Successfully fetched users with Clerk SDK, count:", usersResponse.length);
       
       // Transformă metadata la formatul așteptat de front-end
-      const transformedUsers = usersResponse.map((user: User) => ({
+      const transformedUsers = usersResponse.map((user) => ({
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
-        emailAddresses: user.emailAddresses.map((email: EmailAddress) => ({ 
+        emailAddresses: user.emailAddresses.map((email) => ({ 
           emailAddress: email.emailAddress 
         })),
         createdAt: user.createdAt,
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
       }));
       
       // Obținem numărul total de utilizatori pentru paginare
-      const totalCount = await clerk.users.getCount();
+      const totalCount = await clerkClient.users.getCount();
       const totalPages = Math.ceil(totalCount / limit);
       
       return NextResponse.json({
