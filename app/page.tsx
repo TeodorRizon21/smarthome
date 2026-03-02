@@ -86,39 +86,53 @@ async function getBundles() {
 
 const residentialInstallations = [
   {
-    title: "Vila Smart Pipera",
+    title: "Apartament",
     description:
-      "Sistem complet de automatizare pentru o vilă de lux din Pipera, incluzând control lumini, temperatură, securitate și entertainment.",
-    image: "/smart-residence.jpg",
-    stats: [
-      { label: "Economie Energie", value: "35%" },
-      { label: "Camere Control", value: "12" },
-      { label: "Dispozitive", value: "45+" },
-      { label: "Timp Instalare", value: "14 zile" },
-    ],
-  },
-  {
-    title: "Apartament Premium Aviației",
-    description:
-      "Soluție inteligentă pentru un apartament modern, cu focus pe eficiență energetică și confort.",
+      "Automatizare completă pentru un apartament modern, cu accent pe confort și eficiență.",
     image: "/img1.jpg",
-    stats: [
-      { label: "Economie Energie", value: "28%" },
-      { label: "Camere Control", value: "6" },
-      { label: "Dispozitive", value: "25+" },
-      { label: "Timp Instalare", value: "7 zile" },
+    features: [
+      "Control încălzire în pardoseală",
+      "Control lumini (on/off, dimming, senzori pentru aprindere automată)",
+      "Control AC",
+      "Redare audio 4 zone",
+      "Control rulouri",
+      "Control draperii",
+      "Control și vizualizare pe telefon",
+      "Interfon",
+      "Scenarii",
     ],
   },
   {
-    title: "Casa Inteligentă Corbeanca",
+    title: "Casă de vacanță din lemn",
     description:
-      "Sistem integrat de smart home cu accent pe securitate și automatizare completă.",
+      "Soluție smart pentru o casă de vacanță, gândită pentru siguranță și control de la distanță.",
     image: "/img11.jpg",
-    stats: [
-      { label: "Economie Energie", value: "40%" },
-      { label: "Camere Control", value: "8" },
-      { label: "Dispozitive", value: "35+" },
-      { label: "Timp Instalare", value: "10 zile" },
+    features: [
+      "Control încălzire",
+      "Control lumini (on/off, dimming, senzori pentru aprindere automată)",
+      "Control rulouri",
+      "Scenarii",
+      "Interfon și control acces",
+      "Control și vizualizare pe telefon",
+    ],
+  },
+  {
+    title: "Vilă",
+    description:
+      "Automatizare avansată pentru vilă, cu integrare completă a tuturor sistemelor tehnice.",
+    image: "/smart-residence.jpg",
+    features: [
+      "Control încălzire în pardoseală",
+      "Control lumini (on/off, dimming, senzori pentru aprindere automată)",
+      "Control ventiloconvectoare",
+      "Redare audio 6 zone",
+      "Control rulouri",
+      "Integrare cu pompă de căldură și panouri solare",
+      "Sistem de alarmă integrat",
+      "Vizualizare camere CCTV",
+      "Stație meteo",
+      "Interfon și control acces",
+      "Control și vizualizare pe telefon",
     ],
   },
 ];
