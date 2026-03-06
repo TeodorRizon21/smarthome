@@ -72,8 +72,8 @@ export default function ProductDetails({
   );
 
   return (
-    <div className="container mx-auto px-6">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 bg-white rounded-3xl overflow-hidden shadow-lg">
+    <div className="max-w-[1250px] mx-auto w-full px-4 md:px-6">
+      <div className="flex flex-col md:flex-row gap-8 bg-white rounded-3xl overflow-hidden shadow-lg">
         {/* Secțiunea cu imaginea - fundal întunecat */}
         <div className="w-full md:w-1/2 bg-[#1a1a1a] relative min-h-[200px] md:min-h-[600px] flex items-center justify-center">
           <div className="w-[280px] h-[160px] md:w-full md:h-full relative">

@@ -64,9 +64,9 @@ export default function MobileMenu() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className={`block nav:hidden ml-2 ${transparent ? "text-white hover:bg-white/10" : "text-blue-900 hover:bg-blue-50"}`}
+          className={`nav:hidden shrink-0 ${transparent ? "text-white hover:bg-white/10" : "text-blue-900 hover:bg-blue-50"}`}
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="shrink-0" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>

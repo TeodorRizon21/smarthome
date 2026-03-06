@@ -119,6 +119,7 @@ export default function Navbar() {
       <nav className={navClass + " fixed top-0 left-0 w-full z-50"}>
         {/* Mobile navbar */}
         <div className="flex flex-col w-full px-4 pt-4 pb-2 block nav:hidden">
+          <div className="max-w-[1250px] mx-auto w-full">
           <div className="flex items-center justify-between w-full">
             {isHomePage ? (
               <span
@@ -221,11 +222,12 @@ export default function Navbar() {
               <MobileMenu />
             </div>
           </div>
+          </div>
         </div>
 
         {/* Desktop navbar */}
         <div className="hidden nav:flex">
-          <div className="container mx-auto px-6 py-4">
+          <div className="max-w-[1250px] mx-auto w-full px-4 py-4">
             <div className="flex items-center justify-around gap-4">
               {/* Left section - Logo */}
               {isHomePage ? (

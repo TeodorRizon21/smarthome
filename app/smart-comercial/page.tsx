@@ -169,7 +169,7 @@ export default async function SmartComercialPage() {
           priority
         />
         <div className="absolute inset-0 bg-blue-900/60 mix-blend-multiply" />
-        <div className="absolute z-10 text-center w-full px-4 max-w-6xl mx-auto animate-fade-in">
+        <div className="absolute z-10 text-center w-full px-4 max-w-[1250px] left-1/2 -translate-x-1/2 animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">Smart Comercial</h1>
           <p className="text-lg md:text-2xl text-blue-100 mb-6 max-w-3xl mx-auto drop-shadow">
             Transformă-ți afacerea cu soluții inteligente. Crește eficiența, securitatea și experiența clienților cu tehnologie de ultimă generație.
@@ -181,7 +181,8 @@ export default async function SmartComercialPage() {
       </section>
 
       {/* Business Solutions Grid */}
-      <section className="container mx-auto py-20 px-4">
+      <section className="py-20 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-900 animate-slide-up">
           Soluții Smart pentru Orice Afacere
         </h2>
@@ -210,11 +211,12 @@ export default async function SmartComercialPage() {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
       {/* Implementation Process */}
       <section className="bg-blue-50 py-20 px-4">
-        <div className="container mx-auto">
+        <div className="max-w-[1250px] mx-auto w-full">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-900 animate-fade-in">
             Procesul Nostru de Implementare
           </h2>
@@ -269,7 +271,8 @@ export default async function SmartComercialPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="container mx-auto py-20 px-4">
+      <section className="py-20 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-900 animate-fade-in">
           Beneficii Cheie
         </h2>
@@ -291,11 +294,12 @@ export default async function SmartComercialPage() {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
       {/* Product Showcase */}
       <section className="w-full bg-blue-50 py-16 px-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1250px] mx-auto w-full">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-900 animate-fade-in">
             Produse Smart pentru Afacerea Ta
           </h2>

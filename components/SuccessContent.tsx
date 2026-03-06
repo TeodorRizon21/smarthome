@@ -38,7 +38,8 @@ export default function SuccessContent({
   }, [dispatch]);
 
   return (
-    <div className="container mx-auto px-6 py-12 text-center">
+    <div className="min-h-screen pt-24 pb-24 flex flex-col items-center justify-center container mx-auto px-6 text-center">
+      <div>
       <h1 className="text-3xl font-bold mb-4">Vă mulțumim pentru comandă!</h1>
       <p className="mb-4">
         Comanda dumneavoastră (Număr: {orderNumber || orderId}) a fost înregistrată cu succes.
@@ -60,13 +61,14 @@ export default function SuccessContent({
         </Alert>
       )}
 
-      <div className="space-x-4">
+      <div className="flex flex-wrap items-center justify-center gap-4">
         <Button onClick={() => router.push("/orders")}>
           Vezi Comenzile Mele
         </Button>
         <Button onClick={() => router.push("/")} variant="outline">
           Continuă Cumpărăturile
         </Button>
+      </div>
       </div>
     </div>
   );

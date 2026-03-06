@@ -225,7 +225,7 @@ const SmartHomeHero = () => {
                         style={{ left: h.box.x, top: h.box.y }}
                         className="absolute w-60 h-20 rounded-lg bg-blue-900/80 border-2 border-cyan-300 shadow-[0_0_12px_3px_#4fd1ff] flex flex-col justify-center px-4 z-30 animate-pulse-glow cursor-pointer hover:bg-blue-800 transition"
                       >
-                        <span className="text-cyan-200 font-semibold text-base">
+                        <span className="text-cyan-200 font-semibold text-base uppercase">
                           {h.label}
                         </span>
                         <span className="text-cyan-100 text-xs mt-1">{h.desc}</span>
@@ -235,7 +235,7 @@ const SmartHomeHero = () => {
                         style={{ left: h.box.x, top: h.box.y }}
                         className="absolute w-60 h-20 rounded-lg bg-blue-900/80 border-2 border-cyan-300 shadow-[0_0_12px_3px_#4fd1ff] flex flex-col justify-center px-4 z-30 animate-pulse-glow"
                       >
-                        <span className="text-cyan-200 font-semibold text-base">
+                        <span className="text-cyan-200 font-semibold text-base uppercase">
                           {h.label}
                         </span>
                         <span className="text-cyan-100 text-xs mt-1">{h.desc}</span>

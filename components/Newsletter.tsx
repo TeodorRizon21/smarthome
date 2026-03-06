@@ -46,8 +46,8 @@ export default function Newsletter() {
   return (
     <div className="w-screen relative left-[50%] right-[50%] -mx-[50vw]">
       <div className="bg-[#29b4b9] py-16 rounded-tl-[100px] rounded-tr-[100px]">
-        <div className="px-6 max-w-[1400px] mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-evenly gap-4">
+        <div className="max-w-[1250px] mx-auto w-full">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Text section */}
             <div className="text-left max-w-sm">
               <p className="text-sm mb-2">Fii la curent cu SmartHomeMall</p>
@@ -62,15 +62,15 @@ export default function Newsletter() {
             </div>
 
             {/* Form section */}
-            <div className="w-full md:w-auto flex items-center">
-              <div className="w-full md:w-[500px] bg-white rounded-full py-4 px-4">
-                <form onSubmit={handleSubmit} className="flex">
+            <div className="w-full md:w-auto flex items-center px-4 md:px-0">
+              <div className="w-full md:w-[500px] bg-white rounded-full py-4 px-4 md:px-4">
+                <form onSubmit={handleSubmit} className="flex gap-2">
                   <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    className="flex-1 border-none shadow-none focus:ring-0 bg-transparent h-12 rounded-3xl"
+                    className="flex-1 min-w-0 border-none shadow-none focus:ring-0 bg-transparent h-12 rounded-3xl px-4 md:px-4"
                     required
                     disabled={isLoading}
                   />

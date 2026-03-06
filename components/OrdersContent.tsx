@@ -153,13 +153,13 @@ export default function OrdersContent({ userId }: { userId: string }) {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-6 py-12">Loading orders...</div>
+      <div className="max-w-[1250px] mx-auto w-full px-4 py-12 pt-24">Loading orders...</div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-6 py-12 text-center">
+      <div className="max-w-[1250px] mx-auto w-full px-4 py-12 pt-24 text-center">
         <h1 className="text-3xl font-bold mb-4">Error</h1>
         <p className="mb-8">{error}</p>
         <Link href="/">
@@ -171,7 +171,7 @@ export default function OrdersContent({ userId }: { userId: string }) {
 
   if (orders.length === 0) {
     return (
-      <div className="container mx-auto px-6 py-12 text-center">
+      <div className="max-w-[1250px] mx-auto w-full px-4 py-12 pt-24 text-center">
         <div className="text-left space-y-2 mb-12 font-poppins relative pb-6">
           <p className="text-sm uppercase tracking-wider text-black font-medium">
             YOUR SHOPPING HISTORY
@@ -188,7 +188,7 @@ export default function OrdersContent({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="container mx-auto px-6 py-12">
+    <div className="max-w-[1250px] mx-auto w-full px-4 py-12 pt-24">
       <div className="text-left space-y-2 mb-12 font-poppins relative pb-6">
         <p className="text-sm uppercase tracking-wider text-black font-medium">
           YOUR SHOPPING HISTORY

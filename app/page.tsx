@@ -185,7 +185,7 @@ export default async function Home() {
 
       {/* Featured Products Section */}
       <section className="py-16 bg-white">
-        <div className="container mx-auto">
+        <div className="max-w-[1250px] mx-auto w-full px-4">
           <h2 className="text-3xl font-bold text-center mb-12">
             Produse Recomandate
           </h2>
@@ -203,7 +203,7 @@ export default async function Home() {
       {/* Bundles Section */}
       {bundles.length > 0 && (
         <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
+          <div className="max-w-[1250px] mx-auto w-full px-4">
             <h2 className="text-3xl font-bold text-center mb-12">
               Pachete Smart Home
             </h2>

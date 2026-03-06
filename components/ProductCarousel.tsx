@@ -45,13 +45,13 @@ export default function ProductCarousel({
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="relative max-w-[1400px] mx-auto px-4">
+    <div className="relative w-full">
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-6 md:gap-8 py-4">
+        <div className="flex gap-4 sm:gap-6 py-4">
           {products.map((product) => (
             <div
               key={`${product.id}-${product.name}`}
-              className="flex-none w-full sm:w-1/2 lg:w-1/3 px-0"
+              className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_calc((100%-1.5rem)/2)] lg:flex-[0_0_calc((100%-3rem)/3)] px-0"
             >
               <ProductCard product={product} />
             </div>

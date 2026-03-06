@@ -70,7 +70,7 @@ export default async function SmartResidencePage() {
           priority
         />
         <div className="absolute inset-0 bg-blue-900/60 mix-blend-multiply" />
-        <div className="absolute z-10 text-center w-full px-4 max-w-6xl mx-auto">
+        <div className="absolute z-10 text-center w-full px-4 max-w-[1250px] left-1/2 -translate-x-1/2">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg tracking-tight">
             Smart Residence
           </h1>
@@ -95,7 +95,8 @@ export default async function SmartResidencePage() {
       </section>
 
       {/* Interactive Smart House Layout */}
-      <section className="container mx-auto py-16">
+      <section className="py-16 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
         <h2 className="text-3xl font-bold text-center mb-8 text-blue-900">Explorează Casa Inteligentă</h2>
         <div className="relative w-full max-w-3xl mx-auto aspect-[4/3] rounded-2xl overflow-hidden shadow-lg">
           <img src="/img1.jpg" alt="Smart House" className="w-full h-full object-cover" />
@@ -120,10 +121,12 @@ export default async function SmartResidencePage() {
           ))}
         </div>
         <p className="text-center text-gray-500 mt-4">Atinge sau plasează cursorul pe puncte pentru detalii.</p>
+        </div>
       </section>
 
       {/* Animated Info Cards */}
-      <section className="container mx-auto py-16">
+      <section className="py-16 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
         <h2 className="text-3xl font-bold text-center mb-8 text-blue-900">Cum îți îmbunătățește viața o casă smart?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* TODO: Add cool animations to these cards */}
@@ -143,10 +146,12 @@ export default async function SmartResidencePage() {
             <p>Optimizezi consumul de energie și reduci costurile cu soluții smart pentru fiecare cameră.</p>
           </div>
         </div>
+        </div>
       </section>
 
       {/* What is a Smart Home Section */}
-      <section className="container mx-auto py-16 flex flex-col md:flex-row items-center gap-12">
+      <section className="py-16 px-4">
+        <div className="max-w-[1250px] mx-auto w-full flex flex-col md:flex-row items-center gap-12">
         {/* TODO: Add animated illustration or video */}
         <div className="flex-1 flex justify-center">
           <div className="w-64 h-64 bg-blue-100 rounded-full flex items-center justify-center text-6xl text-blue-400">
@@ -162,12 +167,14 @@ export default async function SmartResidencePage() {
             <li>Monitorizare în timp real</li>
           </ul>
         </div>
+        </div>
       </section>
 
       
 
       {/* How We Can Help Section */}
-      <section className="container mx-auto py-16 px-4 md:px-8">
+      <section className="py-16 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-900">Cum te putem ajuta cu proiectele de smart residence?</h2>
         <div className="grid gap-8 md:grid-cols-3">
           <div className="bg-blue-50 rounded-2xl shadow-lg p-8 flex flex-col items-center text-center transition-transform hover:scale-105">
@@ -203,11 +210,12 @@ export default async function SmartResidencePage() {
             Indiferent de tipul proiectului, oferim soluții personalizate pentru confort, siguranță și eficiență energetică. De la controlul inteligent al locuinței până la automatizări pentru întregul ansamblu rezidențial, suntem partenerul tău de încredere pentru un viitor smart.
           </p>
         </div>
+        </div>
       </section>
 
       {/* Product Scroller */}
-      <section className="w-full bg-blue-50 py-16 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section className="w-full bg-blue-50 py-16 px-4">
+        <div className="max-w-[1250px] mx-auto w-full">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-900">Produse Smart pentru Casa Ta</h2>
           <div className="mt-8">
             <ProductCarousel products={products} />

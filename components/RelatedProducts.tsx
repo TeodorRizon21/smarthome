@@ -39,7 +39,7 @@ export default function RelatedProducts({
 
   return (
     <div className="bg-gray-50">
-      <div className="container mx-auto px-4">
+      <div className="max-w-[1250px] mx-auto w-full px-4">
         <div className="py-12">
           <div className="text-center space-y-2 mb-12 font-poppins relative pb-6">
             <p className="text-sm uppercase tracking-wider text-black font-medium">
