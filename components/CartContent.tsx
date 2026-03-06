@@ -165,20 +165,34 @@ export default function CartContent() {
     }
   };
 
+  const storeNotLiveMessage = (
+    <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-xl">
+      <h2 className="text-lg font-semibold text-amber-900 mb-2">
+        Magazinul online nu este încă activ
+      </h2>
+      <p className="text-amber-800">
+        Poți explora produsele; magazinul online nu este încă live și comenzile nu pot fi finalizate. Te anunțăm când vom activa vânzările online.
+      </p>
+    </div>
+  );
+
   if (state.items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] w-full">
-        <div className="text-center space-y-6">
-          <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
-          <h1 className="text-3xl font-bold">Your cart is empty</h1>
-          <p className="text-gray-600">
-            Start adding items to your cart to make a purchase.
-          </p>
-          <Link href="/">
-            <Button size="lg" className="mt-6">
-              Start Shopping
-            </Button>
-          </Link>
+      <div className="container mx-auto px-6 py-12">
+        {storeNotLiveMessage}
+        <div className="flex flex-col items-center justify-center min-h-[50vh] w-full">
+          <div className="text-center space-y-6">
+            <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
+            <h1 className="text-3xl font-bold">Coșul tău este gol</h1>
+            <p className="text-gray-600">
+              Poți explora produsele; butonul de cumpărare va fi activ când magazinul va fi lansat.
+            </p>
+            <Link href="/">
+              <Button size="lg" className="mt-6">
+                Înapoi la magazin
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -186,7 +200,8 @@ export default function CartContent() {
 
   return (
     <div className="container mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      {storeNotLiveMessage}
+      <h1 className="text-3xl font-bold mb-8">Coș de cumpărături</h1>
 
       {userDiscounts && userDiscounts.hasDiscounts && (
         <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
@@ -314,9 +329,10 @@ export default function CartContent() {
           </div>
           <Button
             className="w-full mt-8"
-            onClick={detailsId ? handleCheckout : handleProceedToOrderDetails}
+            disabled
+            title="Magazinul online nu este încă activ"
           >
-            {detailsId ? "Proceed to Checkout" : "Continue to Order Details"}
+            Finalizare comandă (în curând)
           </Button>
         </div>
       </div>

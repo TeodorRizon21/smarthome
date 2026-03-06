@@ -76,12 +76,18 @@ export default function AdminProductList({
   };
 
   const filteredProducts = products.filter((product) => {
-    const searchLower = searchTerm.toLowerCase();
+    if (!searchTerm.trim()) return true;
+    const searchLower = searchTerm.toLowerCase().trim();
+    const searchNormalized = searchLower.replace(/[\s./\-]+/g, ""); // normalize for code match (e.g. CHTFB-3.0/6.1.21)
     return (
       product.name.toLowerCase().includes(searchLower) ||
-      product.colorVariants.some((variant) =>
-        variant.productCode.toLowerCase().includes(searchLower)
-      )
+      product.colorVariants.some((variant) => {
+        const code = variant.productCode?.toLowerCase() ?? "";
+        return (
+          code.includes(searchLower) ||
+          code.replace(/[\s./\-]+/g, "").includes(searchNormalized)
+        );
+      })
     );
   });
 

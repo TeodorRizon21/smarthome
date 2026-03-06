@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Package, User, ShieldAlert, Search } from "lucide-react";
+import { ShoppingCart, Package, User, ShieldAlert, Search, Globe } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
@@ -19,31 +19,31 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 
 type MenuItem = {
-  label: string;
+  labelKey: "nav.smartProjects" | "nav.smartTechnologies" | "nav.products" | "nav.about";
   href?: string;
   items?: Array<{
     href: string;
-    label: string;
+    labelKey: "nav.smartComercial" | "nav.smartResidence" | "nav.smartLighting" | "nav.smartIntercom";
   }>;
 };
 
 const MENU_ITEMS: MenuItem[] = [
   {
-    label: "Smart Projects",
+    labelKey: "nav.smartProjects",
     items: [
-      { href: "/smart-comercial", label: "Smart Comercial" },
-      { href: "/smart-residence", label: "Smart Residence" },
+      { href: "/smart-comercial", labelKey: "nav.smartComercial" },
+      { href: "/smart-residence", labelKey: "nav.smartResidence" },
     ],
   },
   {
-    label: "Smart Technologies",
+    labelKey: "nav.smartTechnologies",
     items: [
-      { href: "/smart-lighting", label: "Smart Lighting" },
-      { href: "/smart-intercom", label: "Smart Intercom" },
+      { href: "/smart-lighting", labelKey: "nav.smartLighting" },
+      { href: "/smart-intercom", labelKey: "nav.smartIntercom" },
     ],
   },
-  { href: "/products", label: "Produse" },
-  { href: "/despre", label: "Despre" },
+  { href: "/products", labelKey: "nav.products" },
+  { href: "/despre", labelKey: "nav.about" },
 ];
 
 export default function Navbar() {
@@ -295,10 +295,35 @@ export default function Navbar() {
                                   : "text-blue-900"
                               }
                             />
-                            Moderator
+                            {t("nav.moderator")}
                           </Button>
                         </Link>
                       )}
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`${
+                              transparent
+                                ? "text-white hover:text-blue-600 hover:bg-white/10"
+                                : "text-blue-900"
+                            }`}
+                            aria-label={t("nav.language")}
+                          >
+                            <Globe className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setLanguage("ro")}>
+                            Română
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setLanguage("en")}>
+                            English
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       <Link href="/cart">
                         <Button
@@ -405,9 +430,9 @@ export default function Navbar() {
 
                   {/* Center section - Menu */}
                   <div className="flex items-center">
-                    {MENU_ITEMS.map((item, index) => (
+                    {MENU_ITEMS.map((item) => (
                       <div
-                        key={item.label}
+                        key={item.labelKey}
                         className="px-6 first:pl-0 last:pr-0"
                       >
                         {item.items ? (
@@ -419,7 +444,7 @@ export default function Navbar() {
                                   transparent ? "text-white" : "text-gray-600"
                                 }`}
                               >
-                                {item.label}
+                                {t(item.labelKey)}
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -450,7 +475,7 @@ export default function Navbar() {
                                     href={subItem.href}
                                     className="w-full px-4 py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
                                   >
-                                    {subItem.label}
+                                    {t(subItem.labelKey)}
                                   </Link>
                                 </DropdownMenuItem>
                               ))}
@@ -463,7 +488,7 @@ export default function Navbar() {
                               transparent ? "text-white" : "text-gray-600"
                             }`}
                           >
-                            {item.label}
+                            {t(item.labelKey)}
                           </Link>
                         ) : null}
                       </div>
@@ -513,10 +538,35 @@ export default function Navbar() {
                                 : "text-blue-900"
                             }
                           />
-                          Moderator
+                          {t("nav.moderator")}
                         </Button>
                       </Link>
                     )}
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`${
+                            transparent
+                              ? "text-white hover:text-blue-600 hover:bg-white/10"
+                              : "text-blue-900"
+                          }`}
+                          aria-label={t("nav.language")}
+                        >
+                          <Globe className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setLanguage("ro")}>
+                          Română
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLanguage("en")}>
+                          English
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     <Link href="/cart">
                       <Button
@@ -527,7 +577,7 @@ export default function Navbar() {
                             ? "text-white hover:text-blue-600 hover:bg-white/10"
                             : "text-blue-900"
                         }`}
-                      >
+                        >
                         <ShoppingCart
                           className={
                             transparent

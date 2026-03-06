@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Newsletter() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,15 +29,14 @@ export default function Newsletter() {
       }
 
       toast({
-        title: "Succes!",
-        description: "Te-ai abonat cu succes la newsletter!",
+        title: t("newsletter.success"),
+        description: t("newsletter.successDesc"),
       });
       setEmail("");
     } catch (error) {
       toast({
-        title: "Eroare",
-        description:
-          "A apărut o eroare la abonare. Te rugăm să încerci din nou.",
+        title: t("newsletter.error"),
+        description: t("newsletter.errorDesc"),
         variant: "destructive",
       });
     } finally {
@@ -48,20 +49,16 @@ export default function Newsletter() {
       <div className="bg-[#29b4b9] py-16 rounded-tl-[100px] rounded-tr-[100px]">
         <div className="max-w-[1250px] mx-auto w-full">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Text section */}
             <div className="text-left max-w-sm">
-              <p className="text-sm mb-2">Fii la curent cu SmartHomeMall</p>
+              <p className="text-sm mb-2">{t("newsletter.lead")}</p>
               <h2 className="text-2xl md:text-4xl font-bold mb-2">
-                Abonează-te la Newsletter!
+                {t("newsletter.title")}
               </h2>
               <p className="text-gray-700 text-sm">
-                Fii mereu la curent cu ultimele promoții și produse
-                SmartHomeMall! Nu te vom deranja prea des, îți vom scrie doar
-                când e ceva care ți se potrivește!
+                {t("newsletter.description")}
               </p>
             </div>
 
-            {/* Form section */}
             <div className="w-full md:w-auto flex items-center px-4 md:px-0">
               <div className="w-full md:w-[500px] bg-white rounded-full py-4 px-4 md:px-4">
                 <form onSubmit={handleSubmit} className="flex gap-2">
@@ -69,7 +66,7 @@ export default function Newsletter() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
+                    placeholder={t("newsletter.placeholder")}
                     className="flex-1 min-w-0 border-none shadow-none focus:ring-0 bg-transparent h-12 rounded-3xl px-4 md:px-4"
                     required
                     disabled={isLoading}
@@ -79,7 +76,7 @@ export default function Newsletter() {
                     className="bg-black text-white hover:bg-gray-800 rounded-full px-8 h-12"
                     disabled={isLoading}
                   >
-                    {isLoading ? "SE PROCESEAZĂ..." : "ABONEAZĂ-TE"}
+                    {isLoading ? t("newsletter.buttonLoading") : t("newsletter.button")}
                   </Button>
                 </form>
               </div>

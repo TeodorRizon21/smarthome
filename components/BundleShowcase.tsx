@@ -7,64 +7,21 @@ import { ShoppingCart, Package } from "lucide-react";
 import { Bundle } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { useCart } from "@/contexts/cart-context";
-import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 
 interface BundleShowcaseProps {
   bundles: Bundle[];
 }
 
 export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
+  const { t } = useLanguage();
+
   if (!bundles || bundles.length === 0) {
     return null;
   }
 
-  const { dispatch } = useCart();
-
-  const handleAddToCart = (bundle: Bundle) => {
-    dispatch({
-      type: "ADD_TO_CART",
-      payload: {
-        product: {
-          id: `bundle-${bundle.id}`,
-          name: bundle.name,
-          description: bundle.description,
-          images: bundle.images,
-          category: "bundle",
-          subcategory: null,
-          price: bundle.price,
-          oldPrice: bundle.oldPrice,
-          pdfUrl: null,
-          tags: ["bundle"],
-          createdAt: bundle.createdAt,
-          updatedAt: bundle.updatedAt,
-          colorVariants: [
-            {
-              id: `bundle-${bundle.id}`,
-              productCode: `bundle-${bundle.id}`,
-              color: "standard",
-              price: bundle.price,
-              oldPrice: bundle.oldPrice,
-              productId: `bundle-${bundle.id}`,
-            },
-          ],
-        },
-        color: "standard",
-        variant: {
-          id: `bundle-${bundle.id}`,
-          productCode: `bundle-${bundle.id}`,
-          color: "standard",
-          price: bundle.price,
-          oldPrice: bundle.oldPrice,
-          productId: `bundle-${bundle.id}`,
-        },
-        quantity: 1,
-      },
-    });
-    toast({
-      title: "Pachet adăugat în coș!",
-      description: `${bundle.name} a fost adăugat în coșul tău.`,
-    });
+  const handleAddToCart = (_bundle: Bundle) => {
+    // Magazinul online nu este încă activ — fără funcționalitate momentan
   };
 
   return (
@@ -85,12 +42,12 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
               )}
               {isOnSale && (
                 <Badge className="absolute top-2 right-2 bg-red-500 text-white">
-                  Sale
+                  {t("bundle.sale")}
                 </Badge>
               )}
               <Badge className="absolute top-2 left-2 bg-blue-500 text-white">
                 <Package className="w-3 h-3 mr-1" />
-                Bundle
+                {t("bundle.badge")}
               </Badge>
             </div>
 
@@ -116,7 +73,7 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
               </div>
 
               <div className="space-y-2 mb-4">
-                <h4 className="font-medium text-sm">Includes:</h4>
+                <h4 className="font-medium text-sm">{t("bundle.includes")}</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
                   {bundle.items.map((item) => (
                     <li key={item.id} className="flex items-center gap-2">
@@ -130,13 +87,15 @@ export default function BundleShowcase({ bundles }: BundleShowcaseProps) {
               <div className="flex gap-2">
                 <Button
                   onClick={() => handleAddToCart(bundle)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  disabled
+                  title={t("bundle.addToCartTitle")}
+                  className="flex-1 bg-gray-300 text-gray-600 cursor-not-allowed hover:bg-gray-300"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Adaugă în coș
+                  {t("bundle.addToCart")}
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href={`/bundles/${bundle.id}`}>Arată detalii</Link>
+                  <Link href={`/bundles/${bundle.id}`}>{t("bundle.viewDetails")}</Link>
                 </Button>
               </div>
             </CardContent>

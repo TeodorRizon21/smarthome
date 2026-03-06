@@ -10,6 +10,27 @@ interface ColorVariant {
   oldPrice: number | null;
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: { productId: string } }
+) {
+  try {
+    const body = await request.json()
+    const { featured } = body
+    if (typeof featured !== 'boolean') {
+      return NextResponse.json({ error: 'featured must be a boolean' }, { status: 400 })
+    }
+    const product = await prisma.product.update({
+      where: { id: params.productId },
+      data: { featured } as Prisma.ProductUpdateInput,
+    })
+    return NextResponse.json(product)
+  } catch (error) {
+    console.error('Error updating product featured:', error)
+    return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { productId: string } }

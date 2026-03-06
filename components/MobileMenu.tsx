@@ -12,31 +12,31 @@ import { useUser } from "@clerk/nextjs"
 import { useLanguage } from "@/contexts/language-context"
 
 type MenuItem = {
-  label: string;
+  labelKey: "nav.smartProjects" | "nav.smartTechnologies" | "nav.products" | "nav.about";
   href?: string;
   items?: Array<{
     href: string;
-    label: string;
+    labelKey: "nav.smartComercial" | "nav.smartResidence" | "nav.smartLighting" | "nav.smartIntercom";
   }>;
 };
 
 const MENU_ITEMS: MenuItem[] = [
   {
-    label: "Smart Projects",
+    labelKey: "nav.smartProjects",
     items: [
-      { href: "/smart-comercial", label: "Smart Comercial" },
-      { href: "/smart-residence", label: "Smart Residence" },
+      { href: "/smart-comercial", labelKey: "nav.smartComercial" },
+      { href: "/smart-residence", labelKey: "nav.smartResidence" },
     ],
   },
   {
-    label: "Smart Technologies",
+    labelKey: "nav.smartTechnologies",
     items: [
-      { href: "/smart-lighting", label: "Smart Lighting" },
-      { href: "/smart-intercom", label: "Smart Intercom" },
+      { href: "/smart-lighting", labelKey: "nav.smartLighting" },
+      { href: "/smart-intercom", labelKey: "nav.smartIntercom" },
     ],
   },
-  { href: "/products", label: "Produse" },
-  { href: "/despre", label: "Despre" },
+  { href: "/products", labelKey: "nav.products" },
+  { href: "/despre", labelKey: "nav.about" },
 ];
 
 export default function MobileMenu() {
@@ -72,16 +72,16 @@ export default function MobileMenu() {
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:w-80 p-0 flex flex-col bg-white">
         <SheetHeader className="border-b border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t("nav.menu")}</h2>
         </SheetHeader>
         <div className="flex-1 overflow-auto">
           <nav className="flex flex-col divide-y divide-gray-100">
             {MENU_ITEMS.map((item) => (
-              <div key={item.label} className="py-4 px-6">
+              <div key={item.labelKey} className="py-4 px-6">
                 {item.items ? (
                   <>
                     <div className="text-base font-semibold text-gray-900 mb-3">
-                      {item.label}
+                      {t(item.labelKey)}
                     </div>
                     <div className="space-y-3 pl-3">
                       {item.items.map((subItem) => (
@@ -97,7 +97,7 @@ export default function MobileMenu() {
                           )}
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2"></div>
-                          {subItem.label}
+                          {t(subItem.labelKey)}
                         </Link>
                       ))}
                     </div>
@@ -113,7 +113,7 @@ export default function MobileMenu() {
                         : "text-gray-900"
                     )}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 ) : null}
               </div>

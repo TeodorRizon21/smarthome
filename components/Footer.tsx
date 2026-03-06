@@ -5,9 +5,11 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { FaFacebook, FaInstagram, FaLinkedin } from "react-icons/fa";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Footer() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -32,8 +34,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-blue-200/70 text-sm leading-relaxed max-w-xs mb-5">
-              Soluții inteligente pentru locuințe și afaceri moderne.
-              Automatizare, securitate și confort la un click distanță.
+              {t("footer.tagline")}
             </p>
             <div className="flex items-center gap-3">
               <a
@@ -69,23 +70,23 @@ export default function Footer() {
           {/* Pagini */}
           <div>
             <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              Pagini
+              {t("footer.pages")}
             </h3>
             <ul className="space-y-2.5">
               {[
-                { href: "/smart-residence", label: "Smart Residence" },
-                { href: "/smart-comercial", label: "Smart Comercial" },
-                { href: "/smart-lighting", label: "Smart Lighting" },
-                { href: "/smart-intercom", label: "Smart Intercom" },
-                { href: "/products", label: "Produse" },
-                { href: "/despre", label: "Despre" },
+                { href: "/smart-residence", labelKey: "nav.smartResidence" as const },
+                { href: "/smart-comercial", labelKey: "nav.smartComercial" as const },
+                { href: "/smart-lighting", labelKey: "nav.smartLighting" as const },
+                { href: "/smart-intercom", labelKey: "nav.smartIntercom" as const },
+                { href: "/products", labelKey: "nav.products" as const },
+                { href: "/despre", labelKey: "nav.about" as const },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     className="text-blue-200/70 text-sm hover:text-white transition"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -95,7 +96,7 @@ export default function Footer() {
           {/* Legal */}
           <div>
             <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              Informații
+              {t("footer.info")}
             </h3>
             <ul className="space-y-2.5">
               <li>
@@ -103,7 +104,7 @@ export default function Footer() {
                   href="/termeni-conditii"
                   className="text-blue-200/70 text-sm hover:text-white transition"
                 >
-                  Termeni și Condiții
+                  {t("footer.termsAndConditions")}
                 </Link>
               </li>
               <li>
@@ -111,7 +112,7 @@ export default function Footer() {
                   href="/politica-confidentialitate"
                   className="text-blue-200/70 text-sm hover:text-white transition"
                 >
-                  Politica de Confidențialitate
+                  {t("footer.privacyPolicy")}
                 </Link>
               </li>
             </ul>
@@ -120,7 +121,7 @@ export default function Footer() {
           {/* Contact */}
           <div>
             <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              Contact
+              {t("footer.contact")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -149,7 +150,7 @@ export default function Footer() {
                 <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-4 h-4 text-white" />
                 </span>
-                Str. Exemplu 123, București
+                {t("footer.address")}
               </li>
             </ul>
           </div>
@@ -158,15 +159,14 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-blue-200/50 text-xs">
-            &copy; {new Date().getFullYear()} SmartHomeMall. Toate drepturile
-            rezervate.
+            &copy; {new Date().getFullYear()} SmartHomeMall. {t("footer.allRightsReserved")}
           </p>
           <div className="flex items-center gap-4 text-blue-200/50 text-xs">
             <Link href="/termeni-conditii" className="hover:text-white transition">
-              Termeni
+              {t("footer.termsShort")}
             </Link>
             <Link href="/politica-confidentialitate" className="hover:text-white transition">
-              Confidențialitate
+              {t("footer.privacyShort")}
             </Link>
           </div>
         </div>

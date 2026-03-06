@@ -18,6 +18,7 @@ model Product {
   subcategory       String?       // "IP VDP", "SIP VDP", "2-WIRE VDP" (only for Video Door Phone)
   pdfUrl            String? // URL-ul către PDF-ul produsului
   tags              String[]     @default([])
+  featured          Boolean      @default(false) // afișat în secțiunea Produse recomandate pe home
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   OrderItem         OrderItem[]

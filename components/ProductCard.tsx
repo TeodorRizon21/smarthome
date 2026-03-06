@@ -6,16 +6,12 @@ import Link from "next/link";
 import type { ProductWithVariants, ColorVariant } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import { useCart } from "@/contexts/cart-context";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 
 export default function ProductCard({
   product,
 }: {
   product: ProductWithVariants;
 }) {
-  const { dispatch } = useCart();
   const variantsContainerRef = useRef<HTMLDivElement>(null);
   const [showNavigation, setShowNavigation] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -69,32 +65,7 @@ export default function ProductCard({
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (selectedVariant) {
-      dispatch({
-        type: "ADD_TO_CART",
-        payload: {
-          product,
-          color: selectedVariant.color,
-          variant: selectedVariant,
-          quantity: 1,
-        },
-      });
-
-      toast({
-        title: "Produs adăugat în coș",
-        description: `${product.name} (${selectedVariant.color}) a fost adăugat în coșul tău.`,
-        action: (
-          <ToastAction altText="Vezi coșul" asChild>
-            <Link
-              href="/cart"
-              className="bg-[#29b4b9] hover:bg-[#4adde4] text-black transition-colors"
-            >
-              Vezi coșul
-            </Link>
-          </ToastAction>
-        ),
-      });
-    }
+    // Magazinul online nu este încă activ — fără funcționalitate momentan
   };
 
   return (
@@ -205,9 +176,11 @@ export default function ProductCard({
 
             <button
               onClick={handleAddToCart}
-              className="bg-[#29b4b9] p-2.5 rounded-xl hover:bg-[#4adde4] transition-colors duration-300"
+              disabled
+              title="Magazinul online nu este încă activ"
+              className="bg-gray-300 text-gray-500 p-2.5 rounded-xl cursor-not-allowed transition-colors duration-300"
             >
-              <ShoppingCart className="w-5 h-5 text-black" />
+              <ShoppingCart className="w-5 h-5" />
             </button>
           </div>
         </div>

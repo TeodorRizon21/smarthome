@@ -5,13 +5,13 @@ import {
   Package,
   ShoppingBag,
   Plus,
-  Image,
   Tag,
   BarChart3,
   Mail,
   LayoutDashboard,
   LogOut,
   Users,
+  Star,
 } from "lucide-react";
 import MobileMenuButton from "@/components/MobileMenuButton";
 
@@ -60,6 +60,14 @@ export default async function AdminLayout({
             >
               <Plus className="h-5 w-5" />
               <span>Add Product</span>
+            </Link>
+
+            <Link
+              href="/admin/recommended"
+              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-gray-700"
+            >
+              <Star className="h-5 w-5" />
+              <span>Produse recomandate</span>
             </Link>
 
             <Link

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
 import Carousel from "@/components/Carousel";
 import { ProductWithVariants, ColorVariant } from "@/lib/types";
 import { ShoppingCart, Plus, Minus } from "lucide-react";
@@ -31,27 +29,9 @@ export default function ProductDetails({
         : "")
   );
   const [quantity, setQuantity] = useState(1);
-  const { dispatch } = useCart();
 
   const handleAddToCart = () => {
-    const selectedVariant = product.colorVariants.find(
-      (v) => v.color === selectedColor
-    );
-    if (!selectedVariant) return;
-
-    dispatch({
-      type: "ADD_TO_CART",
-      payload: {
-        product,
-        color: selectedColor,
-        variant: selectedVariant,
-        quantity,
-      },
-    });
-    toast({
-      title: "Produs adăugat în coș",
-      description: `${product.name} (${selectedColor}) x${quantity} a fost adăugat în coșul tău.`,
-    });
+    // Magazinul online nu este încă activ — fără funcționalitate momentan
   };
 
   const incrementQuantity = () => {
@@ -199,10 +179,12 @@ export default function ProductDetails({
             </div>
             <Button
               onClick={handleAddToCart}
-              className="flex-1 bg-[#29b4b9] hover:bg-[#4adde4] text-base md:text-lg py-4 md:py-6 text-black flex items-center justify-center gap-2"
+              disabled
+              title="Magazinul online nu este încă activ"
+              className="flex-1 bg-gray-300 text-gray-600 cursor-not-allowed text-base md:text-lg py-4 md:py-6 flex items-center justify-center gap-2"
             >
               <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-              <span>Cumpără</span>
+              <span>Cumpără (în curând)</span>
             </Button>
           </div>
         </div>

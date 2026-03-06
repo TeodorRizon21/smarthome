@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/language-context";
 import "./HeroPulse.css";
 
 interface HeroSlide {
@@ -30,64 +30,17 @@ const lineThick = "h-2";
 const arrow =
   "w-0 h-0 border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-blue-800";
 
-const hotpoints = [
-  {
-    // Stânga sus
-    point: { x: 164, y: 102 },
-    box: { x: -210, y: 45 },
-    label: "Smart residence",
-    desc: "Gestionează iluminatul casei tale din orice locație",
-    polyline: "163,116 90,116 90,60 30,60",
-    link: "/smart-residence",
-  },
-  {
-    // Stânga jos
-    point: { x: 147, y: 263 },
-    box: { x: -210, y: 322 },
-    label: "Smart Comercial",
-    desc: "Gestionează iluminatul casei tale din orice locație",
-    polyline: "148,273 90,360 30,360",
-    link: "/smart-comercial",
-  },
-  {
-    // dreapta jos
-    point: { x: 417, y: 263 },
-    box: { x: 570, y: 345 },
-    label: "Smart Lighting",
-    desc: "Gestionează iluminatul casei tale din orice locație",
-    polyline: "570,390 495,360 440,280",
-    link: "/smart-lighting",
-  },
-  {
-    // Dreapta sus
-    point: { x: 400, y: 102 },
-    box: { x: 600, y: 45 },
-    label: "Smart Intercom",
-    desc: "Menține temperatura perfectă în fiecare cameră",
-    polyline: "425,114 510,114 510,60 615,60",
-    link: "/smart-intercom",
-  },
-  {
-    // Dreapta mijloc
-    point: { x: 428, y: 174 },
-    box: { x: 600, y: 195 },
-    label: "Produse",
-    desc: "Comandă-ți casa folosind doar vocea",
-    polyline: "600,232 525,232,448,185",
-    link: "/products"
-  },
-  {
-    // Stânga mijloc
-    point: { x: 136, y: 173 },
-    box: { x: -172, y: 180 },
-    label: "Despre",
-    desc: "Creează scenarii personalizate pentru casa ta",
-    polyline: "141,176 112,210 67,210",
-    link: "/despre",
-  },
+const hotpointsConfig = [
+  { point: { x: 164, y: 102 }, box: { x: -210, y: 45 }, labelKey: "hero.hotpoint.residence.label" as const, descKey: "hero.hotpoint.residence.desc" as const, polyline: "163,116 90,116 90,60 30,60", link: "/smart-residence" },
+  { point: { x: 147, y: 263 }, box: { x: -210, y: 322 }, labelKey: "hero.hotpoint.comercial.label" as const, descKey: "hero.hotpoint.comercial.desc" as const, polyline: "148,273 90,360 30,360", link: "/smart-comercial" },
+  { point: { x: 417, y: 263 }, box: { x: 570, y: 345 }, labelKey: "hero.hotpoint.lighting.label" as const, descKey: "hero.hotpoint.lighting.desc" as const, polyline: "570,390 495,360 440,280", link: "/smart-lighting" },
+  { point: { x: 400, y: 102 }, box: { x: 600, y: 45 }, labelKey: "hero.hotpoint.intercom.label" as const, descKey: "hero.hotpoint.intercom.desc" as const, polyline: "425,114 510,114 510,60 615,60", link: "/smart-intercom" },
+  { point: { x: 428, y: 174 }, box: { x: 600, y: 195 }, labelKey: "hero.hotpoint.products.label" as const, descKey: "hero.hotpoint.products.desc" as const, polyline: "600,232 525,232,448,185", link: "/products" },
+  { point: { x: 136, y: 173 }, box: { x: -172, y: 180 }, labelKey: "hero.hotpoint.about.label" as const, descKey: "hero.hotpoint.about.desc" as const, polyline: "141,176 112,210 67,210", link: "/despre" },
 ];
 
 const SmartHomeHero = () => {
+  const { t } = useLanguage();
   const [dots, setDots] = useState<Array<{ x: number; y: number }>>([]);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -187,7 +140,7 @@ const SmartHomeHero = () => {
                   width="600"
                   height="450"
                 >
-                  {hotpoints.map((h, i) => (
+                  {hotpointsConfig.map((h, i) => (
                     <polyline
                       key={i}
                       points={h.polyline}
@@ -211,7 +164,7 @@ const SmartHomeHero = () => {
                 </svg>
 
                 {/* Hotpoints and Boxes */}
-                {hotpoints.map((h, i) => (
+                {hotpointsConfig.map((h, i) => (
                   <div key={i}>
                     {/* Hotpoint */}
                     <div
@@ -226,9 +179,9 @@ const SmartHomeHero = () => {
                         className="absolute w-60 h-20 rounded-lg bg-blue-900/80 border-2 border-cyan-300 shadow-[0_0_12px_3px_#4fd1ff] flex flex-col justify-center px-4 z-30 animate-pulse-glow cursor-pointer hover:bg-blue-800 transition"
                       >
                         <span className="text-cyan-200 font-semibold text-base uppercase">
-                          {h.label}
+                          {t(h.labelKey)}
                         </span>
-                        <span className="text-cyan-100 text-xs mt-1">{h.desc}</span>
+                        <span className="text-cyan-100 text-xs mt-1">{t(h.descKey)}</span>
                       </Link>
                     ) : (
                       <div
@@ -236,9 +189,9 @@ const SmartHomeHero = () => {
                         className="absolute w-60 h-20 rounded-lg bg-blue-900/80 border-2 border-cyan-300 shadow-[0_0_12px_3px_#4fd1ff] flex flex-col justify-center px-4 z-30 animate-pulse-glow"
                       >
                         <span className="text-cyan-200 font-semibold text-base uppercase">
-                          {h.label}
+                          {t(h.labelKey)}
                         </span>
-                        <span className="text-cyan-100 text-xs mt-1">{h.desc}</span>
+                        <span className="text-cyan-100 text-xs mt-1">{t(h.descKey)}</span>
                       </div>
                     )}
                   </div>
@@ -250,15 +203,13 @@ const SmartHomeHero = () => {
           {/* Text Content */}
           <div className="max-w-4xl">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-thin font-sans uppercase mb-3 md:mb-4 text-white">
-              Transformă-ți Casa într-un Spațiu Inteligent
+              {t("hero.title")}
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-blue-50 mb-4 md:mb-6 max-w-2xl mx-auto">
-              Descoperă lumea smart home și bucură-te de confortul și eficiența
-              oferită de tehnologia modernă. Controlul casei tale la un click
-              distanță.
+              {t("hero.subtitle")}
             </p>
             <Button className="bg-white hover:bg-blue-50 text-blue-600 px-6 py-4 md:px-8 md:py-6 text-base md:text-lg rounded-full">
-              Explorează Soluțiile
+              {t("hero.cta")}
             </Button>
           </div>
         </div>
